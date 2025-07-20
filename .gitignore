@@ -1,0 +1,214 @@
+# ===========================================
+# DEPENDENCIES
+# ===========================================
+node_modules/
+/.pnp
+.pnp.js
+.pnp.*
+yarn.lock
+pnpm-lock.yaml
+
+# ===========================================
+# BUILD OUTPUTS
+# ===========================================
+/.next/
+/out/
+/build
+/dist
+.next/
+out/
+
+# ===========================================
+# ENVIRONMENT VARIABLES
+# ===========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# ===========================================
+# DATABASE FILES - NEVER COMMIT
+# ===========================================
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+iab_finance.db
+iab_finance.db-journal
+*.db-journal
+
+# ===========================================
+# LOGS AND TEMPORARY FILES
+# ===========================================
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+.stylelintcache
+
+# ===========================================
+# EDITOR AND OS SPECIFIC
+# ===========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===========================================
+# DEVELOPMENT ARTIFACTS
+# ===========================================
+/todos/
+/images/
+/docs/
+/scripts/
+CLAUDE.md
+TODO.md
+TROUBLESHOOTING_LOG.md
+STATUS.md
+*.tmp
+*.temp
+
+# ===========================================
+# USER UPLOADS - NEVER COMMIT
+# ===========================================
+/public/avatars/*
+!/public/avatars/.gitkeep
+/public/church/*
+!/public/church/.gitkeep
+/uploads/
+/user-data/
+
+# ===========================================
+# TEST OUTPUTS
+# ===========================================
+/coverage
+/jest-cache
+/.nyc_output
+.nyc_output
+coverage/
+*.lcov
+
+# ===========================================
+# TYPESCRIPT
+# ===========================================
+*.tsbuildinfo
+next-env.d.ts
+.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ===========================================
+# VERCEL SPECIFIC
+# ===========================================
+.vercel
+.vercelignore
+.vercel/output
+
+# ===========================================
+# NEXT.JS SPECIFIC
+# ===========================================
+.next/
+.next/cache/
+.next/server/
+.next/static/
+.next/trace
+.next/types/
+.next/webpack/
+.next/build-manifest.json
+.next/prerender-manifest.json
+.next/routes-manifest.json
+.next/server-reference-manifest.json
+.next/static-manifest.json
+.next/trace
+.next/turbo-trace
+.next/turbo-trace-*.log
+
+# ===========================================
+# PERFORMANCE AND ANALYSIS
+# ===========================================
+.next/analyze/
+.next/bundle-analyzer/
+.next/performance/
+.next/profiling/
+.next/trace-events
+.next/trace-events.json
+.next/trace-events.json.gz
+
+# ===========================================
+# CACHE FILES
+# ===========================================
+.cache/
+.parcel-cache/
+.turbo/
+.turbo-cache/
+*.cache
+
+# ===========================================
+# DOCUMENTATION DRAFTS (keep only final docs)
+# ===========================================
+/docs/comandos-superclaude-gemini.md
+/docs/usuarios-exemplo.md
+/docs/*.cursorrules
+/docs/drafts/
+/docs/temp/
+
+# ===========================================
+# AI/EDITOR CONFIGURATIONS
+# ===========================================
+.claude/
+.cursor/
+.copilot/
+.github/
+.gitlab/
+
+# ===========================================
+# SECURITY AND SENSITIVE FILES
+# ===========================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets
+*.secret
+
+# ===========================================
+# BACKUP FILES
+# ===========================================
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*~
+
+# ===========================================
+# PACKAGE MANAGER FILES
+# ===========================================
+.npmrc
+.yarnrc
+.yarnrc.yml
+.pnpmrc
+.npmignoreMANUAL-DEPLOY.md
+MANUAL-DEPLOY.md
