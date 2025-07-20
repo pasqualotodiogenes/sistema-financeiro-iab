@@ -6,10 +6,9 @@ import { db } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import * as crypto from 'crypto'
 
-// Inicializar usuários padrão
-AuthService.initializeUsers();
-
 export async function POST(req: NextRequest) {
+  // Inicializar usuários padrão apenas quando API é chamada (não durante build)
+  await AuthService.initializeUsers();
   const { username, password } = await req.json()
   
   if (username === 'visitante' && password === '') {
