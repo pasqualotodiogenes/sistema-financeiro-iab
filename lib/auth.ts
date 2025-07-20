@@ -45,9 +45,11 @@ export class AuthService {
     if (!process.env.DEFAULT_ROOT_PASSWORD) {
       throw new Error("A variável de ambiente DEFAULT_ROOT_PASSWORD deve ser definida.")
     }
-    const usersCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number }
-    if (usersCount.count === 0) {
-      for (const user of DEFAULT_USERS) {
+    
+    // Verifica se cada usuário padrão já existe antes de tentar criar
+    for (const user of DEFAULT_USERS) {
+      const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(user.username) as { id: string } | undefined
+      if (!existingUser) {
         await this.createUserFromDefault(user)
       }
     }
