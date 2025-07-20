@@ -1,5 +1,7 @@
-// MOVED: Este arquivo deve ser movido para app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+
+// Force Node.js runtime for SQLite compatibility
+export const runtime = 'nodejs'
 import { db } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import * as crypto from 'crypto'
