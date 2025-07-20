@@ -1,10 +1,29 @@
-import Database from 'better-sqlite3'
-import * as path from 'path'
+// 🪄 MAGIA AKITA: Troca automática entre SQLite local e Turso
+// LOCAL (VPS):     USE_TURSO=false ou undefined
+// TURSO (Vercel):  USE_TURSO=true + TURSO_DATABASE_URL + TURSO_AUTH_TOKEN
 
-const dbPath = path.join(process.cwd(), 'iab_finance.db')
-const db = new Database(dbPath)
-db.pragma('foreign_keys = ON')
-db.exec(`
+const USE_TURSO = process.env.USE_TURSO === 'true'
+
+let db: any
+
+if (USE_TURSO) {
+  // 🌐 MODO TURSO (Vercel/Cloud)
+  const { createClient } = require('@libsql/client')
+  db = createClient({
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN!
+  })
+} else {
+  // 💾 MODO SQLITE LOCAL (VPS/Desenvolvimento)
+  const Database = require('better-sqlite3')
+  const path = require('path')
+  const dbPath = path.join(process.cwd(), 'iab_finance.db')
+  db = new Database(dbPath)
+  db.pragma('foreign_keys = ON')
+}
+
+// Schema SQL (funciona igual nos dois)
+const schema = `
   CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
@@ -66,6 +85,44 @@ db.exec(`
     expiresAt TEXT NOT NULL,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
   );
-`)
+`
 
-export { db } 
+// 🪄 WRAPPER MÁGICO: Unifica APIs do SQLite e Turso
+const dbWrapper = {
+  // Método unificado para queries
+  prepare: (sql: string) => {
+    return {
+      get: USE_TURSO 
+        ? async (params?: any[]) => {
+            const result = await db.execute({ sql, args: params || [] })
+            return result.rows[0] || undefined
+          }
+        : (params?: any[]) => db.prepare(sql).get(params),
+      
+      all: USE_TURSO
+        ? async (params?: any[]) => {
+            const result = await db.execute({ sql, args: params || [] })
+            return result.rows
+          }
+        : (params?: any[]) => db.prepare(sql).all(params),
+      
+      run: USE_TURSO
+        ? async (params?: any[]) => {
+            return await db.execute({ sql, args: params || [] })
+          }
+        : (params?: any[]) => db.prepare(sql).run(params)
+    }
+  }
+}
+
+// Inicializar schema
+if (USE_TURSO) {
+  // Turso: execução assíncrona  
+  await db.execute(schema)
+} else {
+  // SQLite: execução síncrona
+  db.exec(schema)
+}
+
+// Exportar wrapper que funciona nos dois modos
+export { dbWrapper as db } 
