@@ -4,10 +4,8 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
-  // Force Node.js runtime for API routes (required for SQLite)
-  experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
-  },
+  // Force Node.js runtime for API routes (required for SQLite + Turso)
+  serverExternalPackages: ['better-sqlite3', '@libsql/client'],
 }
 
 export default nextConfig

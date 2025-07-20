@@ -2,21 +2,22 @@
 // LOCAL (VPS):     USE_TURSO=false ou undefined
 // TURSO (Vercel):  USE_TURSO=true + TURSO_DATABASE_URL + TURSO_AUTH_TOKEN
 
+import { createClient } from '@libsql/client'
+import Database from 'better-sqlite3'
+import * as path from 'path'
+
 const USE_TURSO = process.env.USE_TURSO === 'true'
 
-let db: any
+let db: ReturnType<typeof createClient> | Database
 
 if (USE_TURSO) {
   // 🌐 MODO TURSO (Vercel/Cloud)
-  const { createClient } = require('@libsql/client')
   db = createClient({
     url: process.env.TURSO_DATABASE_URL!,
     authToken: process.env.TURSO_AUTH_TOKEN!
   })
 } else {
   // 💾 MODO SQLITE LOCAL (VPS/Desenvolvimento)
-  const Database = require('better-sqlite3')
-  const path = require('path')
   const dbPath = path.join(process.cwd(), 'iab_finance.db')
   db = new Database(dbPath)
   db.pragma('foreign_keys = ON')
@@ -93,24 +94,24 @@ const dbWrapper = {
   prepare: (sql: string) => {
     return {
       get: USE_TURSO 
-        ? async (params?: any[]) => {
-            const result = await db.execute({ sql, args: params || [] })
+        ? async (params?: unknown[]) => {
+            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
             return result.rows[0] || undefined
           }
-        : (params?: any[]) => db.prepare(sql).get(params),
+        : (params?: unknown[]) => (db as Database).prepare(sql).get(params),
       
       all: USE_TURSO
-        ? async (params?: any[]) => {
-            const result = await db.execute({ sql, args: params || [] })
+        ? async (params?: unknown[]) => {
+            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
             return result.rows
           }
-        : (params?: any[]) => db.prepare(sql).all(params),
+        : (params?: unknown[]) => (db as Database).prepare(sql).all(params),
       
       run: USE_TURSO
-        ? async (params?: any[]) => {
-            return await db.execute({ sql, args: params || [] })
+        ? async (params?: unknown[]) => {
+            return await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
           }
-        : (params?: any[]) => db.prepare(sql).run(params)
+        : (params?: unknown[]) => (db as Database).prepare(sql).run(params)
     }
   }
 }
