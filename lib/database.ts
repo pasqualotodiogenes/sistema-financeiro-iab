@@ -94,24 +94,24 @@ const dbWrapper = {
   prepare: (sql: string) => {
     return {
       get: USE_TURSO 
-        ? async (params?: unknown[]) => {
-            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
+        ? async (...params: unknown[]) => {
+            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params })
             return result.rows[0] || undefined
           }
-        : (params?: unknown[]) => (db as Database).prepare(sql).get(params),
+        : (...params: unknown[]) => (db as Database).prepare(sql).get(...params),
       
       all: USE_TURSO
-        ? async (params?: unknown[]) => {
-            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
+        ? async (...params: unknown[]) => {
+            const result = await (db as ReturnType<typeof createClient>).execute({ sql, args: params })
             return result.rows
           }
-        : (params?: unknown[]) => (db as Database).prepare(sql).all(params),
+        : (...params: unknown[]) => (db as Database).prepare(sql).all(...params),
       
       run: USE_TURSO
-        ? async (params?: unknown[]) => {
-            return await (db as ReturnType<typeof createClient>).execute({ sql, args: params || [] })
+        ? async (...params: unknown[]) => {
+            return await (db as ReturnType<typeof createClient>).execute({ sql, args: params })
           }
-        : (params?: unknown[]) => (db as Database).prepare(sql).run(params)
+        : (...params: unknown[]) => (db as Database).prepare(sql).run(...params)
     }
   }
 }
