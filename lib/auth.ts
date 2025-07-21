@@ -301,8 +301,8 @@ export class AuthService {
     return result.changes > 0
   }
 
-  static hasPermission(permission: keyof User["permissions"], category?: string, tokenFromRequest?: string): boolean {
-    const session = this.getCurrentSession(tokenFromRequest || "");
+  static async hasPermission(permission: keyof User["permissions"], category?: string, tokenFromRequest?: string): Promise<boolean> {
+    const session = await this.getCurrentSession(tokenFromRequest || "");
     if (!session) return false;
     const { user } = session;
     const hasGeneralPermission = user.permissions[permission];
