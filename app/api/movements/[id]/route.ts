@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const { date, description, amount, type } = validation.data;
     
-    db.prepare('UPDATE movements SET date = ?, description = ?, amount = ?, type = ? WHERE id = ?')
+    await db.prepare('UPDATE movements SET date = ?, description = ?, amount = ?, type = ? WHERE id = ?')
       .run(date || movement.date, description || movement.description, amount || movement.amount, type || movement.type, id)
     
     return NextResponse.json({ ok: true })
@@ -60,7 +60,8 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const movement = db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
+    const db = await getDb()
+    const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })
     }
@@ -69,7 +70,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Permissão negada para excluir esta movimentação' }, { status: 403 })
     }
 
-    db.prepare('DELETE FROM movements WHERE id = ?').run(id)
+    await db.prepare('DELETE FROM movements WHERE id = ?').run(id)
     
     return NextResponse.json({ ok: true })
   } catch (error: unknown) {

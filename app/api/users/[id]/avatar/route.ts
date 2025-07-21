@@ -24,7 +24,8 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: "Apenas root pode remover avatar" }, { status: 403 })
     }
     // Buscar caminho do avatar atual no banco
-    const avatar = db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string | null } | undefined
+    const db = await getDb()
+    const avatar = await db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string | null } | undefined
     if (avatar && avatar.data && avatar.data.startsWith('/avatars/')) {
       const filePath = path.join(process.cwd(), 'public', avatar.data)
       if (fs.existsSync(filePath)) {
@@ -32,7 +33,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       }
     }
     // Remover registro da tabela avatars
-    db.prepare('DELETE FROM avatars WHERE userId = ?').run(id)
+    await db.prepare('DELETE FROM avatars WHERE userId = ?').run(id)
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro ao remover avatar" }, { status: 500 })
@@ -90,8 +91,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
     const publicPath = `/avatars/${fileName}`;
 
+    const db = await getDb()
     // Remove avatar antigo se existir
-    const oldAvatar = db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string } | undefined;
+    const oldAvatar = await db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string } | undefined;
     if (oldAvatar && oldAvatar.data && oldAvatar.data.startsWith('/avatars/')) {
       const oldFilePath = path.join(process.cwd(), 'public', oldAvatar.data);
       if (fs.existsSync(oldFilePath)) {
@@ -99,8 +101,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
     }
     // Atualiza banco
-    db.prepare('DELETE FROM avatars WHERE userId = ?').run(id);
-    db.prepare('INSERT INTO avatars (userId, data, type) VALUES (?, ?, ?)').run(id, publicPath, 'upload');
+    await db.prepare('DELETE FROM avatars WHERE userId = ?').run(id);
+    await db.prepare('INSERT INTO avatars (userId, data, type) VALUES (?, ?, ?)').run(id, publicPath, 'upload');
 
     return NextResponse.json({ success: true, url: publicPath });
   } catch (error: unknown) {
