@@ -1,4 +1,4 @@
-import { db } from './database'
+import { db as getDb } from './database'
 import { User, Permission } from './types'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
@@ -46,9 +46,10 @@ export class AuthService {
       throw new Error("A variável de ambiente DEFAULT_ROOT_PASSWORD deve ser definida.")
     }
     
+    const db = await getDb()
     // Verifica se cada usuário padrão já existe antes de tentar criar
     for (const user of DEFAULT_USERS) {
-      const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(user.username) as { id: string } | undefined
+      const existingUser = await db.prepare('SELECT id FROM users WHERE username = ?').get(user.username) as { id: string } | undefined
       if (!existingUser) {
         await this.createUserFromDefault(user)
       }
@@ -56,13 +57,14 @@ export class AuthService {
   }
 
   private static async createUserFromDefault(defaultUser: User): Promise<void> {
+    const db = await getDb()
     const hashedPassword = await bcrypt.hash(defaultUser.password || '', 10)
-    db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt, lastLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt, lastLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .run(defaultUser.id, defaultUser.username, hashedPassword, defaultUser.role, defaultUser.name, defaultUser.email, defaultUser.createdAt, defaultUser.lastLogin || null)
-    db.prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(defaultUser.id, defaultUser.permissions.canCreate ? 1 : 0, defaultUser.permissions.canEdit ? 1 : 0, defaultUser.permissions.canDelete ? 1 : 0, defaultUser.permissions.canManageUsers ? 1 : 0, defaultUser.permissions.canViewReports ? 1 : 0, defaultUser.permissions.canManageCategories ? 1 : 0)
     for (const categoryId of defaultUser.permissions.categories) {
-      db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(defaultUser.id, categoryId)
+      await db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(defaultUser.id, categoryId)
     }
   }
 
@@ -106,12 +108,13 @@ export class AuthService {
 
   static async authenticate(username: string, password: string): Promise<AuthSession | null> {
     try {
-      const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User
+      const db = await getDb()
+      const user = await db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User
       if (user) {
         const isValid = await bcrypt.compare(password, user.password || '')
         if (isValid) {
-        const permissions = db.prepare('SELECT * FROM user_permissions WHERE userId = ?').get(user.id) as Permission
-        const categories = db.prepare('SELECT categoryId FROM user_categories WHERE userId = ?').all(user.id) as { categoryId: string }[]
+        const permissions = await db.prepare('SELECT * FROM user_permissions WHERE userId = ?').get(user.id) as Permission
+        const categories = await db.prepare('SELECT categoryId FROM user_categories WHERE userId = ?').all(user.id) as { categoryId: string }[]
         const userWithPermissions: User = {
           ...user,
           permissions: {
@@ -124,13 +127,13 @@ export class AuthService {
             categories: Array.isArray(categories) ? categories.map(c => c.categoryId) : []
           }
         }
-        db.prepare('UPDATE users SET lastLogin = ? WHERE id = ?').run(new Date().toISOString(), user.id)
+        await db.prepare('UPDATE users SET lastLogin = ? WHERE id = ?').run(new Date().toISOString(), user.id)
         const session: AuthSession = {
           user: { ...userWithPermissions, lastLogin: new Date().toISOString() },
           token: this.generateToken(),
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         }
-        db.prepare('INSERT OR REPLACE INTO sessions (token, userId, expiresAt) VALUES (?, ?, ?)').run(session.token, user.id, session.expiresAt)
+        await db.prepare('INSERT OR REPLACE INTO sessions (token, userId, expiresAt) VALUES (?, ?, ?)').run(session.token, user.id, session.expiresAt)
         return session
       }
     }
@@ -140,13 +143,14 @@ export class AuthService {
     return null;
   }
 
-  static getCurrentSession(tokenFromRequest: string): AuthSession | null {
+  static async getCurrentSession(tokenFromRequest: string): Promise<AuthSession | null> {
     try {
+      const db = await getDb()
       const token = tokenFromRequest;
       if (!token) {
         return null;
       }
-      const sessionData = db.prepare('SELECT s.token, s.expiresAt, u.id, u.username, u.role, u.name, u.email, u.createdAt, u.lastLogin FROM sessions s JOIN users u ON s.userId = u.id WHERE s.token = ? AND s.expiresAt > ?').get(token, new Date().toISOString()) as {
+      const sessionData = await db.prepare('SELECT s.token, s.expiresAt, u.id, u.username, u.role, u.name, u.email, u.createdAt, u.lastLogin FROM sessions s JOIN users u ON s.userId = u.id WHERE s.token = ? AND s.expiresAt > ?').get(token, new Date().toISOString()) as {
         token: string;
         expiresAt: string;
         id: string;
@@ -158,13 +162,13 @@ export class AuthService {
         lastLogin: string | null;
       } | undefined;
       if (sessionData) {
-        const permissions = db.prepare('SELECT * FROM user_permissions WHERE userId = ?').get(sessionData.id) as Permission;
-        const categories = db.prepare('SELECT categoryId FROM user_categories WHERE userId = ?').all(sessionData.id) as { categoryId: string }[];
+        const permissions = await db.prepare('SELECT * FROM user_permissions WHERE userId = ?').get(sessionData.id) as Permission;
+        const categories = await db.prepare('SELECT categoryId FROM user_categories WHERE userId = ?').all(sessionData.id) as { categoryId: string }[];
         let categoriesIds: string[] = Array.isArray(categories) ? categories.map(c => c.categoryId) : [];
         
         // Corrigir lógica para viewers: eles devem ter acesso a categorias públicas/sistema
         if (sessionData.role === 'viewer') {
-          const publicAndSystemCategories = db.prepare('SELECT id FROM categories WHERE isSystem = 1 OR isPublic = 1').all() as { id: string }[];
+          const publicAndSystemCategories = await db.prepare('SELECT id FROM categories WHERE isSystem = 1 OR isPublic = 1').all() as { id: string }[];
           categoriesIds = publicAndSystemCategories.map(c => c.id);
         }
         const user: User = {
