@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/database'
+import { db as getDb } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import { Category } from '@/lib/types'
 import { z } from 'zod'
@@ -20,12 +20,13 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     if (!token) {
       return NextResponse.json({ error: 'Token de sessão não encontrado' }, { status: 401 })
     }
-    const session = AuthService.getCurrentSession(token)
+    const session = await AuthService.getCurrentSession(token)
     if (!session || !AuthUtils.canEditCategory(session.user)) {
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+    const db = await getDb()
+    const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
     }
@@ -41,7 +42,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 
     const { name, icon, color, isPublic } = validation.data;
 
-    db.prepare('UPDATE categories SET name = ?, icon = ?, color = ?, isPublic = ? WHERE id = ?')
+    await db.prepare('UPDATE categories SET name = ?, icon = ?, color = ?, isPublic = ? WHERE id = ?')
       .run(name || category.name, icon || category.icon, color || category.color, isPublic === undefined ? category.isPublic : (isPublic ? 1 : 0), id)
     
     return NextResponse.json({ ok: true })
@@ -59,12 +60,13 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     if (!token) {
       return NextResponse.json({ error: 'Token de sessão não encontrado' }, { status: 401 })
     }
-    const session = AuthService.getCurrentSession(token)
+    const session = await AuthService.getCurrentSession(token)
     if (!session || !AuthUtils.canDeleteCategory(session.user)) {
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+    const db = await getDb()
+    const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
     }
@@ -72,7 +74,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
         return NextResponse.json({ error: 'Não é possível excluir uma categoria do sistema.' }, { status: 403 })
     }
 
-    db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+    await db.prepare('DELETE FROM categories WHERE id = ?').run(id)
     
     return NextResponse.json({ ok: true })
   } catch (error: unknown) {
