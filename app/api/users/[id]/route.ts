@@ -69,7 +69,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     let permissions = validation.data.permissions;
     if (!permissions) {
       // Se não vier do frontend, usar permissões atuais do usuário
-      const user = AuthService.getUsers().find(u => u.id === id);
+      const users = await AuthService.getUsers()
+      const user = users.find(u => u.id === id);
       if (user && user.permissions && typeof user.permissions.canCreate === 'boolean') {
         permissions = {
           canCreate: !!user.permissions.canCreate,

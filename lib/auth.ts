@@ -68,7 +68,8 @@ export class AuthService {
     }
   }
 
-  static getUsers(): User[] {
+  static async getUsers(): Promise<User[]> {
+    const db = await getDb()
     const query = `
       SELECT
         u.id, u.username, u.role, u.name, u.email, u.createdAt, u.lastLogin,
@@ -83,7 +84,7 @@ export class AuthService {
       ORDER BY u.name
     `;
 
-    const rows = db.prepare(query).all() as Array<Record<string, unknown>>;
+    const rows = await db.prepare(query).all() as Array<Record<string, unknown>>;
 
     return rows.map(row => ({
       id: String(row.id),

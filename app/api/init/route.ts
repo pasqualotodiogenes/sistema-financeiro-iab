@@ -22,7 +22,8 @@ export async function POST() {
 export async function GET() {
   try {
     // Verificar status da inicialização
-    const usersCount = AuthService.getUsers().length
+    const users = await AuthService.getUsers()
+    const usersCount = users.length
     const categoriesCount = DataStorage.getCategories().length
     const movementsCount = DataStorage.getMovements().length
 

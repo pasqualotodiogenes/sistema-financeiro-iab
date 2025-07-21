@@ -28,7 +28,7 @@ export async function GET() {
     if (session.user.role !== 'root' && !session.user.permissions.canManageUsers) {
       return NextResponse.json({ error: "Sem permissão para gerenciar usuários" }, { status: 403 })
     }
-    const users = AuthService.getUsers()
+    const users = await AuthService.getUsers()
     return NextResponse.json(users)
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Erro ao buscar usuários' }, { status: 500 })
