@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
   fs.writeFileSync(filePath, buffer);
 
   const imagePath = `/api/assets/church/${fileName}`;
-  db.prepare("UPDATE church_profile SET image = ?, updatedAt = datetime('now') WHERE id = ?")
+  const db = await getDb();
+  await db.prepare("UPDATE church_profile SET image = ?, updatedAt = datetime('now') WHERE id = ?")
     .run(imagePath, 'main');
 
   return NextResponse.json({ success: true, image: imagePath });
@@ -47,11 +48,12 @@ export async function DELETE(req: NextRequest) {
   if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }
-  const row = db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
+  const db = await getDb();
+  const row = await db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
   if (row?.image) {
     const filePath = path.join(process.cwd(), 'public', row.image);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
-  db.prepare("UPDATE church_profile SET image = NULL, updatedAt = datetime('now') WHERE id = ?").run('main');
+  await db.prepare("UPDATE church_profile SET image = NULL, updatedAt = datetime('now') WHERE id = ?").run('main');
   return NextResponse.json({ success: true });
 } 
