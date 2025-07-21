@@ -3,7 +3,7 @@ import { AuthService } from "@/lib/auth"
 import { cookies } from "next/headers"
 import fs from "fs"
 import path from "path"
-import { db } from "@/lib/database"
+import { db as getDb } from "@/lib/database"
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +16,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   try {
     const cookieStore = await cookies()
     const sessionToken = cookieStore.get('session-token')?.value
-    const session = AuthService.getCurrentSession(sessionToken || '')
+    const session = await AuthService.getCurrentSession(sessionToken || '')
     if (!session?.user) {
       return NextResponse.json({ error: "Usuário não autenticado" }, { status: 401 })
     }
@@ -48,7 +48,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get('session-token')?.value;
-    const session = AuthService.getCurrentSession(sessionToken || '');
+    const session = await AuthService.getCurrentSession(sessionToken || '');
     if (!session?.user) {
       return NextResponse.json({ error: "Usuário não autenticado" }, { status: 401 });
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/database';
+import { db as getDb } from '@/lib/database';
 import { AuthService } from '@/lib/auth';
 import path from 'path';
 import fs from 'fs';
@@ -8,13 +8,14 @@ const ALLOWED_ROLES = ['root', 'admin', 'editor'];
 const CHURCH_DIR = path.join(process.cwd(), 'public', 'church');
 
 export async function GET() {
-  const row = db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
+  const db = await getDb();
+  const row = await db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
   return NextResponse.json({ image: row?.image || null });
 }
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get('session-token')?.value;
-  const session = AuthService.getCurrentSession(token || '');
+  const session = await AuthService.getCurrentSession(token || '');
   if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const token = req.cookies.get('session-token')?.value;
-  const session = AuthService.getCurrentSession(token || '');
+  const session = await AuthService.getCurrentSession(token || '');
   if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }

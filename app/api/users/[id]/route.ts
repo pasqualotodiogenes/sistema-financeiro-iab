@@ -33,7 +33,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (!id) {
       return NextResponse.json({ error: "ID do usuário não informado." }, { status: 400 });
     }
-    const session = AuthService.getCurrentSession(sessionToken);
+    const session = await AuthService.getCurrentSession(sessionToken);
     // LOG: Sessão recebida
     console.log('[PUT /api/users/[id]] Sessão:', session);
 
@@ -128,7 +128,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (!id) {
       return NextResponse.json({ error: "ID do usuário não informado." }, { status: 400 });
     }
-    const session = AuthService.getCurrentSession(sessionToken);
+    const session = await AuthService.getCurrentSession(sessionToken);
 
     if (!session?.user || !session.user.permissions.canManageUsers) {
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });

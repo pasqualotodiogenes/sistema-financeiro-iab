@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/database'
+import { db as getDb } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import { AuthUtils } from '@/lib/auth-utils'
 import type { Movement, UserWithPermissions } from '@/lib/types'
@@ -17,12 +17,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const { id } = await params;
   try {
     const token = req.cookies.get('session-token')?.value
-    const session = AuthService.getCurrentSession(token || '') as { user: UserWithPermissions }
+    const session = await AuthService.getCurrentSession(token || '') as { user: UserWithPermissions }
     if (!session) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const movement = db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
+    const db = await getDb()
+    const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })
     }
@@ -54,7 +55,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   const { id } = await params;
   try {
     const token = req.cookies.get('session-token')?.value
-    const session = AuthService.getCurrentSession(token || '') as { user: UserWithPermissions }
+    const session = await AuthService.getCurrentSession(token || '') as { user: UserWithPermissions }
     if (!session) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }

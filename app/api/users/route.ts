@@ -21,7 +21,7 @@ export async function GET() {
   try {
     const cookieStore = await cookies()
     const sessionToken = cookieStore.get('session-token')?.value
-    const session = AuthService.getCurrentSession(sessionToken || '')
+    const session = await AuthService.getCurrentSession(sessionToken || '')
     if (!session?.user) {
       return NextResponse.json({ error: "Usuário não autenticado" }, { status: 401 })
     }
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const cookieStore = await cookies()
     const sessionToken = cookieStore.get('session-token')?.value
-    const session = AuthService.getCurrentSession(sessionToken || '')
+    const session = await AuthService.getCurrentSession(sessionToken || '')
     if (!session?.user) {
       return NextResponse.json({ error: "Usuário não autenticado" }, { status: 401 })
     }
