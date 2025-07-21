@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false }, { status: 400 })
     }
 
-    const session = AuthService.getCurrentSession(token)
+    const session = await AuthService.getCurrentSession(token)
     if (!session) {
       return NextResponse.json({ valid: false }, { status: 401 })
     }

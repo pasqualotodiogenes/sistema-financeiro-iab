@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Token not provided' }, { status: 400 });
     }
 
-    // AuthService.getCurrentSession é síncrono, então não precisa de await
-    const session = AuthService.getCurrentSession(token);
+    // AuthService.getCurrentSession é ASYNC, precisa de await
+    const session = await AuthService.getCurrentSession(token);
 
     if (session && session.user) {
       // Retorna o usuário para o middleware

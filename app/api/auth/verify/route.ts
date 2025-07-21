@@ -8,7 +8,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Token não fornecido' }, { status: 400 })
     }
 
-    const session = AuthService.getCurrentSession(token)
+    const session = await AuthService.getCurrentSession(token)
     if (!session) {
       return NextResponse.json({ error: 'Sessão inválida ou expirada' }, { status: 401 })
     }

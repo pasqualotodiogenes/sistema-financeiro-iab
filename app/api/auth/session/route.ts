@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
   }
   
-  const session = AuthService.getCurrentSession(token)
+  const session = await AuthService.getCurrentSession(token)
   if (!session) {
     return NextResponse.json({ error: 'Sessão inválida ou expirada.' }, { status: 401 })
   }
