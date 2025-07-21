@@ -220,15 +220,17 @@ export class AuthService {
     return null;
   }
 
-  static logout(token?: string): void {
+  static async logout(token?: string): Promise<void> {
     if (token) {
-      db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+      const db = await getDb()
+      await db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
     }
   }
 
   static async createUser(userData: Omit<User, "id" | "createdAt">): Promise<User> {
+    const db = await getDb()
     const sanitizedUsername = sanitize(userData.username)
-    const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(sanitizedUsername) as { id: string } | undefined
+    const existingUser = await db.prepare('SELECT id FROM users WHERE username = ?').get(sanitizedUsername) as { id: string } | undefined
     if (existingUser) {
       throw new Error("Nome de usuário já existe")
     }
@@ -238,23 +240,24 @@ export class AuthService {
     const sanitizedName = sanitize(userData.name || '')
     const sanitizedEmail = userData.email ? sanitize(userData.email) : ''
     
-    db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, sanitizedUsername, hashedPassword, userData.role, sanitizedName, sanitizedEmail, createdAt)
-    db.prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    await db.prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, userData.permissions.canCreate ? 1 : 0, userData.permissions.canEdit ? 1 : 0, userData.permissions.canDelete ? 1 : 0, userData.permissions.canManageUsers ? 1 : 0, userData.permissions.canViewReports ? 1 : 0, userData.permissions.canManageCategories ? 1 : 0)
     for (const categoryId of userData.permissions.categories) {
-      db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(id, categoryId)
+      await db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(id, categoryId)
     }
     return { ...userData, id, createdAt, username: sanitizedUsername, name: sanitizedName }
   }
 
   static async updateUser(userId: string, userData: Partial<User>): Promise<boolean> {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User
+    const db = await getDb()
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User
     if (!user) return false
 
     const sanitizedUsername = userData.username ? sanitize(userData.username) : undefined
     if (sanitizedUsername && sanitizedUsername !== user.username) {
-      const existingUser = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(sanitizedUsername, userId) as { id: string } | undefined
+      const existingUser = await db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(sanitizedUsername, userId) as { id: string } | undefined
       if (existingUser) {
           throw new Error("Nome de usuário já existe")
         }
@@ -275,25 +278,26 @@ export class AuthService {
       if (sanitizedEmail) { updates.push('email = ?'); values.push(sanitizedEmail) }
       if (userData.role) { updates.push('role = ?'); values.push(userData.role) }
       values.push(userId)
-      db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values)
+      await db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values)
     }
     if (userData.permissions) {
-      db.prepare('UPDATE user_permissions SET canCreate = ?, canEdit = ?, canDelete = ?, canManageUsers = ?, canViewReports = ?, canManageCategories = ? WHERE userId = ?')
+      await db.prepare('UPDATE user_permissions SET canCreate = ?, canEdit = ?, canDelete = ?, canManageUsers = ?, canViewReports = ?, canManageCategories = ? WHERE userId = ?')
         .run(userData.permissions.canCreate ? 1 : 0, userData.permissions.canEdit ? 1 : 0, userData.permissions.canDelete ? 1 : 0, userData.permissions.canManageUsers ? 1 : 0, userData.permissions.canViewReports ? 1 : 0, userData.permissions.canManageCategories ? 1 : 0, userId)
-      db.prepare('DELETE FROM user_categories WHERE userId = ?').run(userId)
+      await db.prepare('DELETE FROM user_categories WHERE userId = ?').run(userId)
       for (const categoryId of userData.permissions.categories) {
-        db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(userId, categoryId)
+        await db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(userId, categoryId)
       }
     }
     return true
   }
 
-  static deleteUser(userId: string): boolean {
-    const user = db.prepare('SELECT role FROM users WHERE id = ?').get(userId) as { role: string } | undefined
+  static async deleteUser(userId: string): Promise<boolean> {
+    const db = await getDb()
+    const user = await db.prepare('SELECT role FROM users WHERE id = ?').get(userId) as { role: string } | undefined
     if (user?.role === "root") {
       throw new Error("Não é possível excluir usuários root")
     }
-    const result = db.prepare('DELETE FROM users WHERE id = ?').run(userId)
+    const result = await db.prepare('DELETE FROM users WHERE id = ?').run(userId)
     return result.changes > 0
   }
 
@@ -367,13 +371,14 @@ export class AuthService {
   }
 
   static async resetDatabase(): Promise<void> {
-    db.prepare('DELETE FROM sessions').run()
-    db.prepare('DELETE FROM user_categories').run()
-    db.prepare('DELETE FROM user_permissions').run()
-    db.prepare('DELETE FROM users').run()
-    db.prepare('DELETE FROM movements').run()
-    db.prepare('DELETE FROM categories').run()
-    db.prepare('DELETE FROM avatars').run()
+    const db = await getDb()
+    await db.prepare('DELETE FROM sessions').run()
+    await db.prepare('DELETE FROM user_categories').run()
+    await db.prepare('DELETE FROM user_permissions').run()
+    await db.prepare('DELETE FROM users').run()
+    await db.prepare('DELETE FROM movements').run()
+    await db.prepare('DELETE FROM categories').run()
+    await db.prepare('DELETE FROM avatars').run()
     await this.initializeUsers()
   }
 }
