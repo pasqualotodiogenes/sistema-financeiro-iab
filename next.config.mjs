@@ -7,11 +7,6 @@ const nextConfig = {
   // Force Node.js runtime for API routes (required for SQLite)
   serverExternalPackages: ['better-sqlite3'],
   
-  // Explicit App Router configuration
-  experimental: {
-    appDir: true,
-  },
-  
   // 🚀 DISABLE ESLINT DURING BUILD - CHURCH NEEDS THIS WORKING NOW!
   eslint: {
     ignoreDuringBuilds: true,
