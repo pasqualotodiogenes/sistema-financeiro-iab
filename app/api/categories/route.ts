@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db as getDb } from '@/lib/database'
+import { db } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import { AuthUtils } from '@/lib/auth-utils'
 import { DataStorage } from '@/lib/data-storage'
@@ -24,14 +24,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const session = await AuthService.getCurrentSession(token)
+    const session = AuthService.getCurrentSession(token)
     if (!session) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
     // Listar categorias com base nas permissões do usuário
-    const allCategories = (await db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
+    const allCategories = (db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
       return {
         ...cat,
         isSystem: !!cat.isSystem,
@@ -62,12 +61,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const session = await AuthService.getCurrentSession(token)
+    const session = AuthService.getCurrentSession(token)
     if (!session || !AuthUtils.canCreateCategory(session.user)) {
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
-
-    const db = await getDb()
 
     const data = await req.json()
     const validation = categorySchema.safeParse(data);
@@ -89,12 +86,12 @@ export async function POST(req: NextRequest) {
     const baseSlug = slugify(name)
     let slug = baseSlug
     let i = 1
-    while (await db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(slug)) {
+    while (db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(slug)) {
       slug = `${baseSlug}-${i++}`
     }
 
     const id = Date.now().toString()
-    await db.prepare('INSERT INTO categories (id, name, icon, color, isSystem, isPublic, slug) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    db.prepare('INSERT INTO categories (id, name, icon, color, isSystem, isPublic, slug) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, name, icon, color, 0, isPublic ? 1 : 0, slug)
     
     return NextResponse.json({ ok: true, id, slug })

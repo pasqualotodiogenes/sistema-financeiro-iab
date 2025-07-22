@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db as getDb } from '@/lib/database'
+import { db } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import { Category } from '@/lib/types'
 
@@ -15,12 +15,11 @@ export async function GET(req: NextRequest, context: { params: Promise<{ slug: s
   const token = req.cookies.get('session-token')?.value
   let session = null
   if (token) {
-    session = await AuthService.getCurrentSession(token)
+    session = AuthService.getCurrentSession(token)
   }
   const user = session?.user || null
 
-  const db = await getDb()
-  const category = await db.prepare('SELECT * FROM categories WHERE lower(slug) = lower(?)').get(slug) as Category | undefined
+  const category = db.prepare('SELECT * FROM categories WHERE lower(slug) = lower(?)').get(slug) as Category | undefined
   if (!category) return NextResponse.json({ error: 'Categoria não encontrada.' }, { status: 404 })
 
   // Se não autenticado, só permitir acesso a categorias públicas ou fixas

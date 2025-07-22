@@ -3,7 +3,7 @@ import { AuthService } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const session = await AuthService.getCurrentSession('')
+    const session = AuthService.getCurrentSession('')
     if (!session) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }

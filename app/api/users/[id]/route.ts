@@ -33,7 +33,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (!id) {
       return NextResponse.json({ error: "ID do usuário não informado." }, { status: 400 });
     }
-    const session = await AuthService.getCurrentSession(sessionToken);
+    const session = AuthService.getCurrentSession(sessionToken);
     // LOG: Sessão recebida
     console.log('[PUT /api/users/[id]] Sessão:', session);
 
@@ -69,7 +69,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     let permissions = validation.data.permissions;
     if (!permissions) {
       // Se não vier do frontend, usar permissões atuais do usuário
-      const users = await AuthService.getUsers()
+      const users = AuthService.getUsers()
       const user = users.find(u => u.id === id);
       if (user && user.permissions && typeof user.permissions.canCreate === 'boolean') {
         permissions = {
@@ -105,7 +105,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     }
     validation.data.permissions = permissions;
 
-    const success = await AuthService.updateUser(id, validation.data);
+    const success = AuthService.updateUser(id, validation.data);
     if (!success) {
       return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
     }
@@ -129,7 +129,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (!id) {
       return NextResponse.json({ error: "ID do usuário não informado." }, { status: 400 });
     }
-    const session = await AuthService.getCurrentSession(sessionToken);
+    const session = AuthService.getCurrentSession(sessionToken);
 
     if (!session?.user || !session.user.permissions.canManageUsers) {
       return NextResponse.json({ error: "Acesso negado." }, { status: 403 });
