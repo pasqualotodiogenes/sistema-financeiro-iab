@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     }
 
     // AuthService.getCurrentSession é ASYNC, precisa de await
-    const session = await AuthService.getCurrentSession(token);
+    const session = AuthService.getCurrentSession(token);
 
     if (session && session.user) {
       // Retorna o usuário para o middleware

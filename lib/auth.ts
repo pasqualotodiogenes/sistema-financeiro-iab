@@ -1,4 +1,4 @@
-import { db as getDb } from './database'
+import { db } from './database'
 import { User, Permission } from './types'
 import * as bcrypt from 'bcryptjs'
 import * as crypto from 'crypto'
@@ -46,7 +46,10 @@ export class AuthService {
       throw new Error("A variável de ambiente DEFAULT_ROOT_PASSWORD deve ser definida.")
     }
     
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     // Verifica se cada usuário padrão já existe antes de tentar criar
     for (const user of DEFAULT_USERS) {
       const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(user.username) as { id: string } | undefined
@@ -57,7 +60,10 @@ export class AuthService {
   }
 
   private static async createUserFromDefault(defaultUser: User): Promise<void> {
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const hashedPassword = await bcrypt.hash(defaultUser.password || '', 10)
     db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt, lastLogin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .run(defaultUser.id, defaultUser.username, hashedPassword, defaultUser.role, defaultUser.name, defaultUser.email, defaultUser.createdAt, defaultUser.lastLogin || null)
@@ -68,8 +74,12 @@ export class AuthService {
     }
   }
 
+<<<<<<< HEAD
   static async getUsers(): Promise<User[]> {
     const db = getDb()
+=======
+  static getUsers(): User[] {
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const query = `
       SELECT
         u.id, u.username, u.role, u.name, u.email, u.createdAt, u.lastLogin,
@@ -109,7 +119,10 @@ export class AuthService {
 
   static async authenticate(username: string, password: string): Promise<AuthSession | null> {
     try {
+<<<<<<< HEAD
       const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username) as User
       if (user) {
         const isValid = await bcrypt.compare(password, user.password || '')
@@ -144,9 +157,12 @@ export class AuthService {
     return null;
   }
 
-  static async getCurrentSession(tokenFromRequest: string): Promise<AuthSession | null> {
+  static getCurrentSession(tokenFromRequest: string): AuthSession | null {
     try {
+<<<<<<< HEAD
       const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
       const token = tokenFromRequest;
       if (!token) {
         return null;
@@ -220,15 +236,21 @@ export class AuthService {
     return null;
   }
 
-  static async logout(token?: string): Promise<void> {
+  static logout(token?: string): void {
     if (token) {
+<<<<<<< HEAD
       const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
       db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
     }
   }
 
   static async createUser(userData: Omit<User, "id" | "createdAt">): Promise<User> {
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const sanitizedUsername = sanitize(userData.username)
     const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(sanitizedUsername) as { id: string } | undefined
     if (existingUser) {
@@ -251,7 +273,10 @@ export class AuthService {
   }
 
   static async updateUser(userId: string, userData: Partial<User>): Promise<boolean> {
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as User
     if (!user) return false
 
@@ -291,8 +316,12 @@ export class AuthService {
     return true
   }
 
+<<<<<<< HEAD
   static async deleteUser(userId: string): Promise<boolean> {
     const db = getDb()
+=======
+  static deleteUser(userId: string): boolean {
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const user = db.prepare('SELECT role FROM users WHERE id = ?').get(userId) as { role: string } | undefined
     if (user?.role === "root") {
       throw new Error("Não é possível excluir usuários root")
@@ -371,7 +400,10 @@ export class AuthService {
   }
 
   static async resetDatabase(): Promise<void> {
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     db.prepare('DELETE FROM sessions').run()
     db.prepare('DELETE FROM user_categories').run()
     db.prepare('DELETE FROM user_permissions').run()

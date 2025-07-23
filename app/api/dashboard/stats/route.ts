@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db as getDb } from '@/lib/database'
+import { db } from '@/lib/database'
 import { AuthService } from '@/lib/auth'
 import type { Movement, Category } from '@/lib/types'
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const token = req.cookies.get('session-token')?.value
     let session = null
     if (token) {
-      session = await AuthService.getCurrentSession(token)
+      session = AuthService.getCurrentSession(token)
     }
     const user = session?.user || { role: 'viewer', permissions: { categories: [] } }
 
@@ -26,15 +26,18 @@ export async function GET(req: NextRequest) {
       categoriesQuery = `SELECT * FROM categories WHERE id IN (${categoryPlaceholders}) ORDER BY name`
     }
 
+<<<<<<< HEAD
     const db = getDb()
+=======
+>>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     let movements: Movement[] = []
     let categories: Category[] = []
     if (user.role === 'viewer' || user.role === 'root' || user.role === 'admin') {
-      movements = await db.prepare(movementsQuery).all() as Movement[]
-      categories = await db.prepare(categoriesQuery).all() as Category[]
+      movements = db.prepare(movementsQuery).all() as Movement[]
+      categories = db.prepare(categoriesQuery).all() as Category[]
     } else {
-      movements = await db.prepare(movementsQuery).all(...user.permissions.categories) as Movement[]
-      categories = await db.prepare(categoriesQuery).all(...user.permissions.categories) as Category[]
+      movements = db.prepare(movementsQuery).all(...user.permissions.categories) as Movement[]
+      categories = db.prepare(categoriesQuery).all(...user.permissions.categories) as Category[]
     }
 
     // Calcular totais gerais
