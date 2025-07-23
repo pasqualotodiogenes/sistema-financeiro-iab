@@ -9,7 +9,7 @@ import * as crypto from 'crypto'
 export async function POST(req: NextRequest) {
   // Inicializar usuários padrão apenas quando API é chamada (não durante build)
   await AuthService.initializeUsers();
-  const db = await getDb()
+  const db = getDb()
   const { username, password } = await req.json()
   
   if (username === 'visitante' && password === '') {

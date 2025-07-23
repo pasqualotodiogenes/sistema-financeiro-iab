@@ -19,7 +19,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ slug: s
   }
   const user = session?.user || null
 
-  const db = await getDb()
+  const db = getDb()
   const category = await db.prepare('SELECT * FROM categories WHERE lower(slug) = lower(?)').get(slug) as Category | undefined
   if (!category) return NextResponse.json({ error: 'Categoria não encontrada.' }, { status: 404 })
 

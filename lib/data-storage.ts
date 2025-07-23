@@ -1,4 +1,4 @@
-import { db } from './database'
+import { db as getDb } from './database'
 
 export interface Movement {
   id: string
@@ -32,6 +32,7 @@ export const FIXED_CATEGORIES: Category[] = [
 export class DataStorage {
   static initializeDefaultData(): void {
     // Garante que as categorias fixas existam; não remove personalizadas
+    const db = getDb()
     for (const category of FIXED_CATEGORIES) {
       const exists = db.prepare('SELECT 1 FROM categories WHERE id = ?').get(category.id) as { 1: number } | undefined
       if (!exists) {
@@ -66,10 +67,12 @@ export class DataStorage {
   }
 
   static getMovements(): Movement[] {
+    const db = getDb()
     return db.prepare('SELECT * FROM movements ORDER BY date DESC, createdAt DESC').all() as Movement[]
   }
 
   static addMovement(movement: Omit<Movement, "id" | "createdAt">): Movement {
+    const db = getDb()
     const id = Date.now().toString()
     const createdAt = new Date().toISOString()
     db.prepare('INSERT INTO movements (id, date, description, amount, type, category, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
@@ -78,6 +81,7 @@ export class DataStorage {
   }
 
   static updateMovement(id: string, updates: Partial<Movement>): boolean {
+    const db = getDb()
     const movement = db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement | undefined
     if (!movement) return false
     const updatedMovement = { ...movement, ...updates }
@@ -87,11 +91,13 @@ export class DataStorage {
   }
 
   static deleteMovement(id: string): boolean {
+    const db = getDb()
     const result = db.prepare('DELETE FROM movements WHERE id = ?').run(id)
     return result.changes > 0
   }
 
   static getCategories(): Category[] {
+    const db = getDb()
     // Sempre retorna as fixas + personalizadas
     const dbCategories = db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]
     // Garante que as fixas estejam presentes e ordenadas primeiro

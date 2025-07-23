@@ -24,7 +24,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: "Apenas root pode remover avatar" }, { status: 403 })
     }
     // Buscar caminho do avatar atual no banco
-    const db = await getDb()
+    const db = getDb()
     const avatar = await db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string | null } | undefined
     if (avatar && avatar.data && avatar.data.startsWith('/avatars/')) {
       const filePath = path.join(process.cwd(), 'public', avatar.data)
@@ -91,7 +91,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
     const publicPath = `/avatars/${fileName}`;
 
-    const db = await getDb()
+    const db = getDb()
     // Remove avatar antigo se existir
     const oldAvatar = await db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string } | undefined;
     if (oldAvatar && oldAvatar.data && oldAvatar.data.startsWith('/avatars/')) {

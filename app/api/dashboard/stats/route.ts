@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       categoriesQuery = `SELECT * FROM categories WHERE id IN (${categoryPlaceholders}) ORDER BY name`
     }
 
-    const db = await getDb()
+    const db = getDb()
     let movements: Movement[] = []
     let categories: Category[] = []
     if (user.role === 'viewer' || user.role === 'root' || user.role === 'admin') {

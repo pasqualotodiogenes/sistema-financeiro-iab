@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     // Verificar se há filtro por categoria
     const url = new URL(req.url)
     const categorySlug = url.searchParams.get('categorySlug')
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     const data = await req.json()
     const validation = movementSchema.safeParse(data);
     if (!validation.success) {

@@ -22,7 +22,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })
@@ -60,7 +60,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })

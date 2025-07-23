@@ -25,7 +25,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
@@ -65,7 +65,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })

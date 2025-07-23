@@ -13,12 +13,19 @@ export function ChurchProfileProvider({ children }: { children: React.ReactNode 
 
   const refreshImage = async () => {
     try {
-      const res = await fetch('/api/church/avatar');
+      // Force cache bust
+      const res = await fetch(`/api/church/avatar?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         const imagePath = data.image;
-        // Converte path para usar a nova API route
-        const convertedPath = imagePath ? `/api/assets${imagePath}` : null;
+        console.log('🔍 API returned path:', imagePath); // Debug log
+        
+        // Converte path para usar a nova API route se necessário
+        const convertedPath = imagePath && !imagePath.startsWith('/api/assets') 
+          ? `/api/assets${imagePath}` 
+          : imagePath;
+        
+        console.log('🔍 Converted path:', convertedPath); // Debug log
         setImage(convertedPath);
       } else {
         console.error('Failed to fetch church avatar:', res.status);

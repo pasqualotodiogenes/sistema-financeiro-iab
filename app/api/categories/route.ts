@@ -29,9 +29,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-    const db = await getDb()
+    const db = getDb()
     // Listar categorias com base nas permissões do usuário
-    const allCategories = (await db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
+    const allCategories = (db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
       return {
         ...cat,
         isSystem: !!cat.isSystem,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-    const db = await getDb()
+    const db = getDb()
 
     const data = await req.json()
     const validation = categorySchema.safeParse(data);
