@@ -23,13 +23,9 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     if (session.user.role !== 'root') {
       return NextResponse.json({ error: "Apenas root pode remover avatar" }, { status: 403 })
     }
-    // Buscar caminho do avatar atual no banco
-<<<<<<< HEAD
-    const db = getDb()
-    const avatar = await db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string | null } | undefined
-=======
-    const avatar = db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string | null } | undefined
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+    // Buscar avatar atual no banco
+    const avatar = db().prepare('SELECT * FROM avatars WHERE userId = ?').get(id) as { userId: string, type: string, data: string, backgroundColor?: string } | undefined
+    
     if (avatar && avatar.data && avatar.data.startsWith('/avatars/')) {
       const filePath = path.join(process.cwd(), 'public', avatar.data)
       if (fs.existsSync(filePath)) {
@@ -37,7 +33,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       }
     }
     // Remover registro da tabela avatars
-    db.prepare('DELETE FROM avatars WHERE userId = ?').run(id)
+    db().prepare('DELETE FROM avatars WHERE userId = ?').run(id)
     return NextResponse.json({ success: true })
   } catch (error: unknown) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Erro ao remover avatar" }, { status: 500 })
@@ -95,12 +91,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     fs.writeFileSync(filePath, Buffer.from(arrayBuffer));
     const publicPath = `/avatars/${fileName}`;
 
-<<<<<<< HEAD
-    const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     // Remove avatar antigo se existir
-    const oldAvatar = db.prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string } | undefined;
+    const oldAvatar = db().prepare('SELECT data FROM avatars WHERE userId = ? AND type = ?').get(id, 'upload') as { data: string } | undefined;
     if (oldAvatar && oldAvatar.data && oldAvatar.data.startsWith('/avatars/')) {
       const oldFilePath = path.join(process.cwd(), 'public', oldAvatar.data);
       if (fs.existsSync(oldFilePath)) {
@@ -108,8 +100,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       }
     }
     // Atualiza banco
-    db.prepare('DELETE FROM avatars WHERE userId = ?').run(id);
-    db.prepare('INSERT INTO avatars (userId, data, type) VALUES (?, ?, ?)').run(id, publicPath, 'upload');
+    db().prepare('DELETE FROM avatars WHERE userId = ?').run(id);
+    db().prepare('INSERT INTO avatars (userId, data, type) VALUES (?, ?, ?)').run(id, publicPath, 'upload');
 
     return NextResponse.json({ success: true, url: publicPath });
   } catch (error: unknown) {

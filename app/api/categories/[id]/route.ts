@@ -25,12 +25,9 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-    const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
-=======
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+    // Buscar categoria para verificar se existe
+    const category = db().prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
     }
@@ -46,7 +43,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 
     const { name, icon, color, isPublic } = validation.data;
 
-    db.prepare('UPDATE categories SET name = ?, icon = ?, color = ?, isPublic = ? WHERE id = ?')
+    db().prepare('UPDATE categories SET name = ?, icon = ?, color = ?, isPublic = ? WHERE id = ?')
       .run(name || category.name, icon || category.icon, color || category.color, isPublic === undefined ? category.isPublic : (isPublic ? 1 : 0), id)
     
     return NextResponse.json({ ok: true })
@@ -69,12 +66,9 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-    const category = await db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
-=======
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+    // Buscar categoria por ID
+    const category = db().prepare('SELECT * FROM categories WHERE id = ?').get(id) as Category | undefined
+
     if (!category) {
       return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
     }
@@ -82,7 +76,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
         return NextResponse.json({ error: 'Não é possível excluir uma categoria do sistema.' }, { status: 403 })
     }
 
-    db.prepare('DELETE FROM categories WHERE id = ?').run(id)
+    db().prepare('DELETE FROM categories WHERE id = ?').run(id)
     
     return NextResponse.json({ ok: true })
   } catch (error: unknown) {

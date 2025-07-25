@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
+import { PageHeader } from "@/components/ui/page-header"
 import { AvatarDisplay } from "@/components/avatar-display" // Import AvatarDisplay
 import { AvatarEditor } from "@/components/avatar-editor" // Import AvatarEditor
 import { useAuth } from "@/contexts/auth-context"
@@ -358,32 +359,19 @@ export default function UsersPage() {
   return (
     <AuthGuard requiredPermission="canManageUsers">
       <div className="min-h-screen bg-cream-50 min-w-0 overflow-x-hidden">
-        <div className="bg-white border-b border-cream-200 px-4 py-4 min-w-0 max-w-full overflow-x-hidden">
-          <div className="max-w-6xl mx-auto flex items-center justify-between min-w-0 max-w-full">
-            <div className="flex items-center gap-4 min-w-0">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="rounded-lg text-primary-700">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-primary-800">Gerenciar Usuários</h1>
-                  <p className="text-primary-600">Controle de acesso e permissões</p>
-                </div>
-              </div>
-            </div>
-            {loggedUser?.role === 'root' && (
+        <PageHeader
+          title="Gerenciar Usuários"
+          description="Controle de acesso e permissões"
+          icon={<Users className="w-5 h-5 text-white" />}
+          backHref="/dashboard"
+        >
+          {loggedUser?.role === 'root' && (
             <Button className="gap-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white" onClick={() => { setIsUserFormDialogOpen(true); resetForm(); }}>
-                  <Plus className="w-4 h-4" />
-                  Novo Usuário
-                </Button>
-            )}
-          </div>
-        </div>
+              <Plus className="w-4 h-4" />
+              Novo Usuário
+            </Button>
+          )}
+        </PageHeader>
 
         <div className="p-6 min-w-0 max-w-full overflow-x-hidden">
           <div className="max-w-6xl mx-auto space-y-6 min-w-0 max-w-full">

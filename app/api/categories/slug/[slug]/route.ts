@@ -19,12 +19,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ slug: s
   }
   const user = session?.user || null
 
-<<<<<<< HEAD
-  const db = getDb()
-  const category = await db.prepare('SELECT * FROM categories WHERE lower(slug) = lower(?)').get(slug) as Category | undefined
-=======
-  const category = db.prepare('SELECT * FROM categories WHERE lower(slug) = lower(?)').get(slug) as Category | undefined
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+  // Buscar categoria por slug
+  const category = db().prepare('SELECT * FROM categories WHERE slug = ?').get(slug) as Category | undefined
+  
   if (!category) return NextResponse.json({ error: 'Categoria não encontrada.' }, { status: 404 })
 
   // Se não autenticado, só permitir acesso a categorias públicas ou fixas

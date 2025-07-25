@@ -5,6 +5,7 @@ interface CategoriesContextType {
   categories: Category[];
   loading: boolean;
   refreshCategories: () => Promise<void>;
+  invalidateCache: () => void;
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
 }
 
@@ -65,6 +66,12 @@ export const CategoriesProvider = ({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  // Função para invalidar cache e forçar atualização
+  const invalidateCache = useCallback(() => {
+    categoriesCache = null;
+    pendingRequest = null;
+  }, []);
+
   // Carregar categorias ao montar (apenas uma vez)
   React.useEffect(() => {
     if (!mounted.current) {
@@ -74,7 +81,7 @@ export const CategoriesProvider = ({ children }: { children: React.ReactNode }) 
   }, [refreshCategories]);
 
   return (
-    <CategoriesContext.Provider value={{ categories, loading, refreshCategories, setCategories }}>
+    <CategoriesContext.Provider value={{ categories, loading, refreshCategories, invalidateCache, setCategories }}>
       {children}
     </CategoriesContext.Provider>
   );

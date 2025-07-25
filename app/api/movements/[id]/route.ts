@@ -22,12 +22,9 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-    const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
-=======
-    const movement = db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+    // Buscar movimentação para verificar se existe
+    const movement = db().prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement | undefined
+
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })
     }
@@ -44,7 +41,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 
     const { date, description, amount, type } = validation.data;
     
-    db.prepare('UPDATE movements SET date = ?, description = ?, amount = ?, type = ? WHERE id = ?')
+    db().prepare('UPDATE movements SET date = ?, description = ?, amount = ?, type = ? WHERE id = ?')
       .run(date || movement.date, description || movement.description, amount || movement.amount, type || movement.type, id)
     
     return NextResponse.json({ ok: true })
@@ -64,12 +61,9 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-    const movement = await db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
-=======
-    const movement = db.prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+    // Buscar movimentação para verificar se existe
+    const movement = db().prepare('SELECT * FROM movements WHERE id = ?').get(id) as Movement | undefined
+
     if (!movement) {
       return NextResponse.json({ error: 'Movimentação não encontrada' }, { status: 404 })
     }
@@ -78,7 +72,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Permissão negada para excluir esta movimentação' }, { status: 403 })
     }
 
-    db.prepare('DELETE FROM movements WHERE id = ?').run(id)
+    db().prepare('DELETE FROM movements WHERE id = ?').run(id)
     
     return NextResponse.json({ ok: true })
   } catch (error: unknown) {

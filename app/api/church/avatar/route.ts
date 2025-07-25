@@ -8,12 +8,7 @@ const ALLOWED_ROLES = ['root', 'admin', 'editor'];
 const CHURCH_DIR = path.join(process.cwd(), 'public', 'church');
 
 export async function GET() {
-<<<<<<< HEAD
-  const db = getDb();
-  const row = await db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
-=======
-  const row = db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+  const row = db().prepare("SELECT image FROM church_profile WHERE id = ?").get('main') as { image: string } | undefined;
   return NextResponse.json({ image: row?.image || null });
 }
 
@@ -39,13 +34,8 @@ export async function POST(req: NextRequest) {
   fs.writeFileSync(filePath, buffer);
 
   const imagePath = `/api/assets/church/${fileName}`;
-<<<<<<< HEAD
-  const db = getDb();
-  await db.prepare("UPDATE church_profile SET image = ?, updatedAt = datetime('now') WHERE id = ?")
-=======
-  db.prepare("UPDATE church_profile SET image = ?, updatedAt = datetime('now') WHERE id = ?")
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
-    .run(imagePath, 'main');
+  db().prepare("INSERT OR REPLACE INTO church_profile (id, image, updatedAt) VALUES (?, ?, datetime('now'))")
+    .run('main', imagePath);
 
   return NextResponse.json({ success: true, image: imagePath });
 }
@@ -56,16 +46,12 @@ export async function DELETE(req: NextRequest) {
   if (!session || !ALLOWED_ROLES.includes(session.user.role)) {
     return NextResponse.json({ error: 'Acesso negado' }, { status: 403 });
   }
-<<<<<<< HEAD
-  const db = getDb();
-  const row = await db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
-=======
-  const row = db.prepare('SELECT image FROM church_profile WHERE id = ?').get('main') as { image: string | null } | undefined;
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
+  
+  const row = db().prepare("SELECT image FROM church_profile WHERE id = ?").get('main') as { image: string } | undefined;
   if (row?.image) {
     const filePath = path.join(process.cwd(), 'public', row.image);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
-  db.prepare("UPDATE church_profile SET image = NULL, updatedAt = datetime('now') WHERE id = ?").run('main');
+  db().prepare("UPDATE church_profile SET image = NULL, updatedAt = datetime('now') WHERE id = ?").run('main');
   return NextResponse.json({ success: true });
-} 
+}

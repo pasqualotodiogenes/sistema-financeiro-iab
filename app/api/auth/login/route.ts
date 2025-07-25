@@ -9,10 +9,6 @@ import * as crypto from 'crypto'
 export async function POST(req: NextRequest) {
   // Inicializar usuários padrão apenas quando API é chamada (não durante build)
   await AuthService.initializeUsers();
-<<<<<<< HEAD
-  const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
   const { username, password } = await req.json()
   
   if (username === 'visitante' && password === '') {
@@ -44,19 +40,19 @@ export async function POST(req: NextRequest) {
     const { token, expiresAt, user: userSafe } = session
     
     // Garante que o usuário guest existe no banco
-    const existingGuest = db.prepare('SELECT id FROM users WHERE id = ?').get(user.id) as { id: string } | undefined
+    const existingGuest = db().prepare('SELECT id FROM users WHERE id = ?').get(user.id) as { id: string } | undefined
     if (!existingGuest) {
-      db.prepare('INSERT INTO users (id, username, password, role, name, email, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      db().prepare('INSERT INTO users (id, username, password, role, name, email, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)')
         .run(user.id, user.username, user.password, user.role, user.name, user.email, user.createdAt)
-      db.prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      db().prepare('INSERT INTO user_permissions (userId, canCreate, canEdit, canDelete, canManageUsers, canViewReports, canManageCategories) VALUES (?, ?, ?, ?, ?, ?, ?)')
         .run(user.id, 0, 0, 0, 0, 1, 0)
       for (const categoryId of user.permissions.categories) {
-        db.prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(user.id, categoryId)
+        db().prepare('INSERT INTO user_categories (userId, categoryId) VALUES (?, ?)').run(user.id, categoryId)
       }
     }
     
     // Salvar sessão do visitante no banco
-    db.prepare('INSERT OR REPLACE INTO sessions (token, userId, expiresAt) VALUES (?, ?, ?)').run(token, user.id, expiresAt)
+    db().prepare('INSERT OR REPLACE INTO sessions (token, userId, expiresAt) VALUES (?, ?, ?)').run(token, user.id, expiresAt)
     
     const response = NextResponse.json({ token, expiresAt, user: userSafe })
     response.cookies.set('session-token', token, {

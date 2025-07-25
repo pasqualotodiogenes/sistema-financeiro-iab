@@ -9,8 +9,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Plus, FileText, Printer, TrendingUp, TrendingDown, DollarSign, Edit, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { filterMovementsByDate } from "@/lib/utils"
+import { filterMovementsByDate, formatCurrency } from "@/lib/utils"
+import { StatsCards } from "@/components/ui/stats-cards"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { PageHeader } from "@/components/ui/page-header"
 import { AuthUtils } from '@/lib/auth-utils'
 import { User } from '@/lib/types'
 import { useCategories } from '@/components/ui/categories-context'
@@ -181,7 +183,7 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
   // Função generateReport removida - não utilizada
 
   const printReport = () => {
-    const printContent = `\n      <html>\n        <head>\n          <title>Relatório ${categoryName} - IAB IGREJINHA</title>\n          <style>body { font-family: Arial, sans-serif; margin: 20px; color: #1a2b1e; } .header { text-align: center; margin-bottom: 30px; color: #4a7c59; } .summary { margin-bottom: 30px; background: #f0f4f0; padding: 15px; border-radius: 8px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #eed9b0; padding: 8px; text-align: left; } th { background-color: #f5e6cc; color: #2f5238; } .entrada { color: green; } .saida { color: red; }</style>\n        </head>\n        <body>\n          <div class="header">\n            <h1>IAB IGREJINHA</h1>\n            <h2>Relatório Financeiro - ${categoryName}</h2>\n            <p>Data: ${new Date().toLocaleDateString("pt-BR")}</p>\n            ${selectedYear ? `<p>Ano: ${selectedYear}</p>` : ""}\n            ${selectedMonth ? `<p>Mês: ${selectedMonth}</p>` : ""}\n          </div>\n          <div class="summary">\n            <p><strong>Total de Entradas:</strong> R$ ${totalEntradas.toFixed(2)}</p>\n            <p><strong>Total de Saídas:</strong> R$ ${totalSaidas.toFixed(2)}</p>\n            <p><strong>Saldo:</strong> R$ ${saldo.toFixed(2)}</p>\n          </div>\n          <table>\n            <thead>\n              <tr>\n                <th>Data</th>\n                <th>Descrição</th>\n                <th>Tipo</th>\n                <th>Valor</th>\n              </tr>\n            </thead>\n            <tbody>\n              ${filteredMovements.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("pt-BR")}</td><td>${m.description}</td><td class="${m.type}">${m.type.toUpperCase()}</td><td>R$ ${m.amount.toFixed(2)}</td></tr>`).join("")}\n            </tbody>\n          </table>\n        </body>\n      </html>\n    `
+    const printContent = `\n      <html>\n        <head>\n          <title>Relatório ${categoryName} - IAB IGREJINHA</title>\n          <style>body { font-family: Arial, sans-serif; margin: 20px; color: #1a2b1e; } .header { text-align: center; margin-bottom: 30px; color: #4a7c59; } .summary { margin-bottom: 30px; background: #f0f4f0; padding: 15px; border-radius: 8px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #eed9b0; padding: 8px; text-align: left; } th { background-color: #f5e6cc; color: #2f5238; } .entrada { color: green; } .saida { color: red; }</style>\n        </head>\n        <body>\n          <div class="header">\n            <h1>IAB IGREJINHA</h1>\n            <h2>Relatório Financeiro - ${categoryName}</h2>\n            <p>Data: ${new Date().toLocaleDateString("pt-BR")}</p>\n            ${selectedYear ? `<p>Ano: ${selectedYear}</p>` : ""}\n            ${selectedMonth ? `<p>Mês: ${selectedMonth}</p>` : ""}\n          </div>\n          <div class="summary">\n            <p><strong>Total de Entradas:</strong> ${formatCurrency(totalEntradas)}</p>\n            <p><strong>Total de Saídas:</strong> ${formatCurrency(totalSaidas)}</p>\n            <p><strong>Saldo:</strong> ${formatCurrency(saldo)}</p>\n          </div>\n          <table>\n            <thead>\n              <tr>\n                <th>Data</th>\n                <th>Descrição</th>\n                <th>Tipo</th>\n                <th>Valor</th>\n              </tr>\n            </thead>\n            <tbody>\n              ${filteredMovements.map((m) => `<tr><td>${new Date(m.date).toLocaleDateString("pt-BR")}</td><td>${m.description}</td><td class="${m.type}">${m.type.toUpperCase()}</td><td>R$ ${m.amount.toFixed(2)}</td></tr>`).join("")}\n            </tbody>\n          </table>\n        </body>\n      </html>\n    `
     const printWindow = window.open("", "_blank")
     if (printWindow) {
       printWindow.document.write(printContent)
@@ -211,91 +213,37 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
 
   return (
     <div className="min-h-screen bg-cream-50">
-      <div className="bg-white border-b border-cream-200 px-2 sm:px-4 py-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Layout Mobile: Stack vertical */}
-          <div className="flex flex-col gap-3 md:hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="icon" className="rounded-lg text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8" style={{ background: color || '#f97316', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {icon || <FileText className="w-4 h-4 text-white" />}
-                  </div>
-                  <h1 className="text-lg font-bold text-primary-800">{categoryName}</h1>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-lg border-cream-300 text-primary-700 hover:bg-cream-50">
-                      <Printer className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleExport('pdf')}>Exportar como PDF</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExport('excel')}>Exportar como Excel</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                {categoryId && AuthUtils.hasPermission(currentUser, 'canCreate', categoryId) && (
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="icon" className="rounded-lg bg-primary-700 hover:bg-primary-800 text-white border border-primary-800" onClick={() => { setEditingMovement(null); setFormData({ date: '', description: '', type: 'entrada', amount: '' }); setIsDialogOpen(true); }}>
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
-                )}
-              </div>
-            </div>
-            <p className="text-sm text-primary-600 px-1">{description || `Gestão financeira de ${categoryName.toLowerCase()}`}</p>
+      <PageHeader
+        title={categoryName}
+        description={description || `Gestão financeira de ${categoryName.toLowerCase()}`}
+        icon={
+          <div style={{ color: 'white' }}>
+            {icon || <FileText className="w-5 h-5" />}
           </div>
-          
-          {/* Layout Desktop: Horizontal */}
-          <div className="hidden md:flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard">
-                <Button variant="ghost" size="icon" className="rounded-lg text-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10" style={{ background: color || '#f97316', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {icon || <FileText className="w-5 h-5 text-white" />}
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-primary-800">{categoryName}</h1>
-                  <p className="text-primary-600">{description || `Gestão financeira de ${categoryName.toLowerCase()}`}</p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 rounded-lg border-cream-300 text-primary-700 hover:bg-cream-50 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500">
-                    <Printer className="w-4 h-4" /> Imprimir
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleExport('pdf')}>Exportar como PDF</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('excel')}>Exportar como Excel</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {categoryId && AuthUtils.hasPermission(currentUser, 'canCreate', categoryId) && (
-                <Button className="gap-2 rounded-lg bg-primary-700 hover:bg-primary-800 text-white border border-primary-800" onClick={() => { setEditingMovement(null); setFormData({ date: '', description: '', type: 'entrada', amount: '' }); setIsDialogOpen(true); }}>
-                  <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Nova Movimentação</span>
-                  <span className="sm:hidden">Nova</span>
-                </Button>
-              )}
-            </div>
-          </div>
+        }
+        backHref="/dashboard"
+      >
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 rounded-lg border-cream-300 text-primary-700 hover:bg-cream-50 bg-transparent focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <Printer className="w-4 h-4" />
+                <span className="hidden md:inline">Imprimir</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport('pdf')}>Exportar como PDF</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport('excel')}>Exportar como Excel</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          {categoryId && AuthUtils.hasPermission(currentUser, 'canCreate', categoryId) && (
+            <Button className="gap-2 rounded-lg bg-primary-700 hover:bg-primary-800 text-white border border-primary-800" onClick={() => { setEditingMovement(null); setFormData({ date: '', description: '', type: 'entrada', amount: '' }); setIsDialogOpen(true); }}>
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nova</span>
+            </Button>
+          )}
         </div>
-      </div>
+      </PageHeader>
       
       {/* Dialog Content - Fora dos layouts condicionais */}
       {categoryId && AuthUtils.hasPermission(currentUser, 'canCreate', categoryId) && (
@@ -354,47 +302,11 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* <DateFilter onFilterChange={handleFilterChange} /> */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            <Card className="border-cream-300 shadow-sm bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-primary-600">Total Entradas</p>
-                    <p className="text-2xl font-bold text-green-600">R$ {totalEntradas.toFixed(2)}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-cream-300 shadow-sm bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-primary-600">Total Saídas</p>
-                    <p className="text-2xl font-bold text-red-600">R$ {totalSaidas.toFixed(2)}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <TrendingDown className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-cream-300 shadow-sm bg-white">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-primary-600">Saldo</p>
-                    <p className={`text-2xl font-bold ${saldo >= 0 ? "text-primary-600" : "text-red-600"}`}>R$ {saldo.toFixed(2)}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <DollarSign className="w-6 h-6 text-primary-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCards 
+            totalEntradas={totalEntradas}
+            totalSaidas={totalSaidas}
+            saldo={saldo}
+          />
           <Card className="border-cream-300 shadow-sm bg-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary-800">
@@ -430,7 +342,7 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
                       </div>
                       <div className="flex justify-between items-center">
                         <span className={`text-lg font-bold ${movement.type === "entrada" ? "text-green-600" : "text-red-600"}`}>
-                          R$ {movement.amount.toFixed(2)}
+                          {formatCurrency(movement.amount)}
                         </span>
                         {(currentUser?.permissions?.canEdit || currentUser?.permissions?.canDelete) && (
                           <div className="flex gap-1">
@@ -496,7 +408,7 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
                           <TableCell>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${movement.type === "entrada" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{movement.type.toUpperCase()}</span>
                           </TableCell>
-                          <TableCell className={`text-right font-medium ${movement.type === "entrada" ? "text-green-600" : "text-red-600"}`}>R$ {movement.amount.toFixed(2)}</TableCell>
+                          <TableCell className={`text-right font-medium ${movement.type === "entrada" ? "text-green-600" : "text-red-600"}`}>{formatCurrency(movement.amount)}</TableCell>
                           {(currentUser?.permissions?.canEdit || currentUser?.permissions?.canDelete) && (
                             <TableCell className="text-center">
                               <div className="flex items-center justify-center gap-2">

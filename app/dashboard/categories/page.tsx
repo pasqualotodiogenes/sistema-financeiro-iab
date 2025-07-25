@@ -12,52 +12,39 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import {
   ArrowLeft,
   Plus,
   Settings,
   Edit,
   Trash2,
-  Coffee,
-  Heart,
-  Wrench,
-  Users,
-  Calendar,
-  ShoppingCart,
   Folder,
 } from "lucide-react"
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
+import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/auth-context"
 import { useCategories } from "@/components/ui/categories-context"
 import { AuthUtils } from '@/lib/auth-utils'
-
-const iconOptions = [
-  { value: "Coffee", label: "Café", icon: Coffee },
-  { value: "Heart", label: "Coração", icon: Heart },
-  { value: "Wrench", label: "Ferramenta", icon: Wrench },
-  { value: "Users", label: "Usuários", icon: Users },
-  { value: "Calendar", label: "Calendário", icon: Calendar },
-  { value: "ShoppingCart", label: "Carrinho", icon: ShoppingCart },
-  { value: "Folder", label: "Pasta", icon: Folder },
-]
-
-const colorOptions = [
-  { value: "amber", label: "Âmbar", color: "bg-amber-500" },
-  { value: "red", label: "Vermelho", color: "bg-red-500" },
-  { value: "blue", label: "Azul", color: "bg-blue-500" },
-  { value: "green", label: "Verde", color: "bg-green-500" },
-  { value: "purple", label: "Roxo", color: "bg-purple-500" },
-  { value: "orange", label: "Laranja", color: "bg-orange-500" },
-]
+import { iconOptions, colorOptions, getIconComponent, getColorBgClass } from '@/lib/icons-colors'
 
 export default function CategoriesPage() {
   const { user: currentUser } = useAuth()
-  const { refreshCategories } = useCategories()
+  const { refreshCategories, invalidateCache } = useCategories()
   const [categories, setCategories] = useState<Category[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [error, setError] = useState("")
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    categoryId: string | null
+    categoryName: string
+  }>({
+    open: false,
+    categoryId: null,
+    categoryName: ""
+  })
   const [formData, setFormData] = useState({
     name: "",
     icon: "Folder",
@@ -104,6 +91,8 @@ export default function CategoriesPage() {
           })
         })
       }
+      // Invalidar cache e recarregar imediatamente
+      invalidateCache()
       await loadCategories()
       await refreshCategories()
       resetForm()
@@ -132,18 +121,33 @@ export default function CategoriesPage() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (categoryId: string) => {
+  const handleDelete = (categoryId: string, categoryName: string) => {
+    setConfirmDialog({
+      open: true,
+      categoryId,
+      categoryName
+    })
+  }
+
+  const confirmDelete = async () => {
+    if (!confirmDialog.categoryId) return
+    
     try {
-      if (confirm("Tem certeza que deseja excluir esta categoria? Todos os dados relacionados serão perdidos.")) {
-        await fetch(`/api/categories/${categoryId}`, { method: "DELETE" })
-        await loadCategories()
-        await refreshCategories()
+      const response = await fetch(`/api/categories/${confirmDialog.categoryId}`, { method: "DELETE" })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Erro ao excluir categoria")
       }
+      
+      // Invalidar cache e recarregar imediatamente
+      invalidateCache()
+      await loadCategories()
+      await refreshCategories()
     } catch (err: unknown) {
       if (err instanceof Error) {
-      alert(err.message || "Erro ao excluir categoria")
+        setError(err.message || "Erro ao excluir categoria")
       } else {
-        alert("Erro ao excluir categoria")
+        setError("Erro ao excluir categoria")
       }
     }
   }
@@ -159,49 +163,22 @@ export default function CategoriesPage() {
     setError("")
   }
 
-  const getIconComponent = (iconName: string) => {
-    const iconOption = iconOptions.find((opt) => opt.value === iconName)
-    return iconOption?.icon || Folder
-  }
-
-  const getColorClass = (colorName: string) => {
-    const colorOption = colorOptions.find((opt) => opt.value === colorName)
-    return colorOption?.color || "bg-blue-500"
-  }
 
   return (
     <AuthGuard requiredPermission="canManageCategories">
       <div className="min-h-screen bg-cream-50">
-        <div className="bg-white border-b border-cream-200 px-4 py-4">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-lg text-primary-700"
-                  title="Voltar para o Dashboard"
-                  aria-label="Voltar para o Dashboard"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                  <Settings className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-primary-800">Gerenciar Categorias</h1>
-                  <p className="text-primary-600">Configuração das categorias financeiras</p>
-                </div>
-              </div>
-            </div>
-            {AuthUtils.canCreateCategory(currentUser) && (
+        <PageHeader
+          title="Gerenciar Categorias"
+          description="Configuração das categorias financeiras"
+          icon={<Settings className="w-5 h-5 text-white" />}
+          backHref="/dashboard"
+        >
+          {AuthUtils.canCreateCategory(currentUser) && (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   className="gap-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white"
-                    onClick={() => { resetForm(); setIsDialogOpen(true); }}
+                  onClick={() => { resetForm(); setIsDialogOpen(true); }}
                 >
                   <Plus className="w-4 h-4" />
                   Nova Categoria
@@ -285,7 +262,7 @@ export default function CategoriesPage() {
                   <div className="flex justify-center py-4">
                     <div className="flex items-center gap-3 p-3 bg-cream-50 rounded-lg">
                       <div
-                        className={`w-10 h-10 ${getColorClass(formData.color)} rounded-lg flex items-center justify-center`}
+                        className={`w-10 h-10 ${getColorBgClass(formData.color)} rounded-lg flex items-center justify-center`}
                       >
                         {React.createElement(getIconComponent(formData.icon), {
                           className: "w-5 h-5 text-white",
@@ -330,8 +307,7 @@ export default function CategoriesPage() {
               </DialogContent>
             </Dialog>
             )}
-          </div>
-        </div>
+        </PageHeader>
 
         <div className="p-6">
           <div className="max-w-6xl mx-auto space-y-6">
@@ -347,7 +323,7 @@ export default function CategoriesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 w-full max-w-full overflow-x-auto">
                   {categories.map((category) => {
                     const IconComponent = getIconComponent(category.icon)
-                    const colorClass = getColorClass(category.color)
+                    const colorClass = getColorBgClass(category.color)
 
                     return (
                       <Card key={category.id} className="border-cream-300 hover:shadow-md transition-shadow h-full w-full max-w-full">
@@ -388,7 +364,7 @@ export default function CategoriesPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleDelete(category.id)}
+                                onClick={() => handleDelete(category.id, category.name)}
                                 className="h-8 w-8 rounded-lg hover:bg-red-100 text-red-600"
                                 title="Excluir Categoria"
                                 aria-label="Excluir Categoria"
@@ -422,6 +398,18 @@ export default function CategoriesPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Confirmação */}
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        title="Excluir Categoria"
+        description={`Tem certeza que deseja excluir a categoria "${confirmDialog.categoryName}"? Todos os dados relacionados serão perdidos permanentemente.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDelete}
+      />
     </AuthGuard>
   )
 }

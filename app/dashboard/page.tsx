@@ -7,7 +7,10 @@ import { useAuth } from '@/contexts/auth-context'
 import { usePermissions } from '@/hooks/use-permissions'
 import Link from 'next/link'
 import { LoadingState } from '@/components/loading-states'
-import { Coffee, Heart, Wrench, Users, Calendar, ShoppingCart, TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+import { StatsCards } from '@/components/ui/stats-cards'
+import { getIconComponent, colorMap } from '@/lib/icons-colors'
 
 interface DashboardStats {
   totalEntradas: number
@@ -25,27 +28,6 @@ interface DashboardStats {
   }>
 }
 
-const iconMap = {
-  Coffee,
-  Heart,
-  Wrench,
-  Users,
-  Calendar,
-  ShoppingCart,
-}
-
-const colorMap: Record<string, string> = {
-  blue: 'text-blue-600',
-  green: 'text-green-600', 
-  red: 'text-red-600',
-  yellow: 'text-yellow-600',
-  purple: 'text-purple-600',
-  pink: 'text-pink-600',
-  indigo: 'text-indigo-600',
-  gray: 'text-gray-600',
-  orange: 'text-orange-600',
-  teal: 'text-teal-600'
-}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -81,17 +63,7 @@ export default function DashboardPage() {
 
 
 
-  const getIconComponent = (iconName: string) => {
-    const IconComponent = iconMap[iconName as keyof typeof iconMap]
-    return IconComponent || Coffee
-  }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
 
   if (loading) {
     return (
@@ -127,41 +99,12 @@ export default function DashboardPage() {
         </div>
 
           {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            <Card className="border-green-200 bg-green-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-800">Total Entradas</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-800">
-                  {formatCurrency(stats?.totalEntradas || 0)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-red-200 bg-red-50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-red-800">Total Saídas</CardTitle>
-                <TrendingDown className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-800">
-                  {formatCurrency(stats?.totalSaidas || 0)}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className={`border-2 ${saldo >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className={`text-sm font-medium ${saldo >= 0 ? 'text-green-800' : 'text-red-800'}`}>Saldo</CardTitle>
-                <DollarSign className={`h-4 w-4 ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-              </CardHeader>
-              <CardContent>
-              <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-800' : 'text-red-800'}`}>{formatCurrency(saldo)}</div>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCards 
+            totalEntradas={stats?.totalEntradas || 0}
+            totalSaidas={stats?.totalSaidas || 0}
+            saldo={saldo}
+            className="mb-8"
+          />
 
           {/* Categorias */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">

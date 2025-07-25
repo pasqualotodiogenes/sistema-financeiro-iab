@@ -26,18 +26,14 @@ export async function GET(req: NextRequest) {
       categoriesQuery = `SELECT * FROM categories WHERE id IN (${categoryPlaceholders}) ORDER BY name`
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     let movements: Movement[] = []
     let categories: Category[] = []
     if (user.role === 'viewer' || user.role === 'root' || user.role === 'admin') {
-      movements = db.prepare(movementsQuery).all() as Movement[]
-      categories = db.prepare(categoriesQuery).all() as Category[]
+      movements = db().prepare(movementsQuery).all() as Movement[]
+      categories = db().prepare(categoriesQuery).all() as Category[]
     } else {
-      movements = db.prepare(movementsQuery).all(...user.permissions.categories) as Movement[]
-      categories = db.prepare(categoriesQuery).all(...user.permissions.categories) as Category[]
+      movements = db().prepare(movementsQuery).all(...user.permissions.categories) as Movement[]
+      categories = db().prepare(categoriesQuery).all(...user.permissions.categories) as Category[]
     }
 
     // Calcular totais gerais

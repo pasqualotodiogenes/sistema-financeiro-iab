@@ -26,10 +26,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     // Verificar se há filtro por categoria
     const url = new URL(req.url)
     const categorySlug = url.searchParams.get('categorySlug')
@@ -39,7 +35,7 @@ export async function GET(req: NextRequest) {
     if (categorySlug) {
       // Filtrar por categoria específica (OTIMIZAÇÃO)
       // Primeiro buscar o ID da categoria pelo slug
-      const category = db.prepare('SELECT id FROM categories WHERE slug = ?').get(categorySlug) as { id: string } | undefined
+      const category = db().prepare('SELECT id FROM categories WHERE slug = ?').get(categorySlug) as { id: string } | undefined
       
       if (!category) {
         return NextResponse.json({ error: 'Categoria não encontrada' }, { status: 404 })
@@ -53,12 +49,12 @@ export async function GET(req: NextRequest) {
       }
       
       // Buscar movimentações apenas da categoria especificada
-      movements = db.prepare('SELECT * FROM movements WHERE category = ? ORDER BY date DESC, createdAt DESC').all(category.id) as Movement[]
+      movements = db().prepare('SELECT * FROM movements WHERE category = ? ORDER BY date DESC, createdAt DESC').all(category.id) as Movement[]
     } else {
       // Comportamento original: buscar todas as movimentações que o usuário pode ver
       if (session.user.role === 'root' || session.user.role === 'admin') {
         // Root e admin veem todas as movimentações
-        movements = db.prepare('SELECT * FROM movements ORDER BY date DESC').all() as Movement[]
+        movements = db().prepare('SELECT * FROM movements ORDER BY date DESC').all() as Movement[]
       } else {
         // Outros usuários veem apenas movimentações das categorias que têm acesso
         const categoryPlaceholders = session.user.permissions.categories.map(() => '?').join(',')
@@ -67,7 +63,7 @@ export async function GET(req: NextRequest) {
           WHERE category IN (${categoryPlaceholders})
           ORDER BY date DESC, createdAt DESC
         `
-        movements = db.prepare(query).all(...session.user.permissions.categories) as Movement[]
+        movements = db().prepare(query).all(...session.user.permissions.categories) as Movement[]
       }
     }
     
@@ -91,10 +87,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
 
-<<<<<<< HEAD
-    const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     const data = await req.json()
     const validation = movementSchema.safeParse(data);
     if (!validation.success) {
@@ -121,7 +113,7 @@ export async function POST(req: NextRequest) {
     const id = Date.now().toString()
     const createdAt = new Date().toISOString()
     
-    db.prepare('INSERT INTO movements (id, date, description, amount, type, category, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    db().prepare('INSERT INTO movements (id, date, description, amount, type, category, createdBy, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .run(id, date, description, amount, type, category, session.user.id, createdAt)
     
     return NextResponse.json({ ok: true, id })

@@ -28,13 +28,8 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Sessão expirada' }, { status: 401 })
     }
-
-<<<<<<< HEAD
-    const db = getDb()
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
     // Listar categorias com base nas permissões do usuário
-    const allCategories = (db.prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
+    const allCategories = (db().prepare('SELECT * FROM categories ORDER BY name').all() as Category[]).map((cat) => {
       return {
         ...cat,
         isSystem: !!cat.isSystem,
@@ -69,13 +64,13 @@ export async function POST(req: NextRequest) {
     if (!session || !AuthUtils.canCreateCategory(session.user)) {
       return NextResponse.json({ error: 'Permissão negada' }, { status: 403 })
     }
-
-<<<<<<< HEAD
-    const db = getDb()
-
-=======
->>>>>>> 8c7ee621e6097d5d86f5297726a3fafed9a905c4
-    const data = await req.json()
+    let data;
+    try {
+      data = await req.json()
+    } catch (error) {
+      return NextResponse.json({ error: 'Dados JSON inválidos' }, { status: 400 })
+    }
+    
     const validation = categorySchema.safeParse(data);
     if (!validation.success) {
         return NextResponse.json({ error: validation.error.errors.map(e => e.message).join(', ') }, { status: 400 });
@@ -95,12 +90,12 @@ export async function POST(req: NextRequest) {
     const baseSlug = slugify(name)
     let slug = baseSlug
     let i = 1
-    while (db.prepare('SELECT 1 FROM categories WHERE slug = ?').get(slug)) {
+    while (db().prepare('SELECT 1 FROM categories WHERE slug = ?').get(slug)) {
       slug = `${baseSlug}-${i++}`
     }
 
     const id = Date.now().toString()
-    db.prepare('INSERT INTO categories (id, name, icon, color, isSystem, isPublic, slug) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    db().prepare('INSERT INTO categories (id, name, icon, color, isSystem, isPublic, slug) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(id, name, icon, color, 0, isPublic ? 1 : 0, slug)
     
     return NextResponse.json({ ok: true, id, slug })
