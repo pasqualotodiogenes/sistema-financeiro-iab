@@ -27,7 +27,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/auth-context"
 import { useCategories } from "@/components/ui/categories-context"
 import { AuthUtils } from '@/lib/auth-utils'
-import { iconOptions, colorOptions, getIconComponent, getColorBgClass } from '@/lib/icons-colors'
+import { iconOptions, getIconComponent } from '@/lib/icons-colors'
 
 export default function CategoriesPage() {
   const { user: currentUser } = useAuth()
@@ -48,7 +48,6 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({
     name: "",
     icon: "Folder",
-    color: "blue",
     isPublic: false,
   })
 
@@ -74,7 +73,7 @@ export default function CategoriesPage() {
           body: JSON.stringify({
             name: formData.name,
             icon: formData.icon,
-            color: formData.color,
+            color: "gray",
             isPublic: formData.isPublic,
           })
         })
@@ -85,7 +84,7 @@ export default function CategoriesPage() {
           body: JSON.stringify({
             name: formData.name,
             icon: formData.icon,
-            color: formData.color,
+            color: "gray",
             isSystem: false,
             isPublic: formData.isPublic,
           })
@@ -115,7 +114,6 @@ export default function CategoriesPage() {
     setFormData({
       name: category.name,
       icon: category.icon,
-      color: category.color,
       isPublic: category.isPublic ?? false,
     })
     setIsDialogOpen(true)
@@ -155,8 +153,7 @@ export default function CategoriesPage() {
   const resetForm = () => {
     setFormData({
       name: "",
-      icon: "Folder",
-      color: "blue",
+      icon: "Folder", 
       isPublic: false,
     })
     setEditingCategory(null)
@@ -235,37 +232,12 @@ export default function CategoriesPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="color" className="text-primary-700">
-                      Cor
-                    </Label>
-                    <Select
-                      value={formData.color}
-                      onValueChange={(value) => setFormData({ ...formData, color: value })}
-                    >
-                      <SelectTrigger className="rounded-lg border-cream-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {colorOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className="flex items-center gap-2">
-                              <div className={`w-4 h-4 rounded ${option.color}`} />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
                   <div className="flex justify-center py-4">
                     <div className="flex items-center gap-3 p-3 bg-cream-50 rounded-lg">
-                      <div
-                        className={`w-10 h-10 ${getColorBgClass(formData.color)} rounded-lg flex items-center justify-center`}
-                      >
+                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                         {React.createElement(getIconComponent(formData.icon), {
-                          className: "w-5 h-5 text-white",
+                          className: "w-5 h-5 text-gray-600",
                         })}
                       </div>
                       <span className="font-medium text-primary-800">{formData.name || "Preview"}</span>
@@ -323,27 +295,16 @@ export default function CategoriesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 w-full max-w-full overflow-x-auto">
                   {categories.map((category) => {
                     const IconComponent = getIconComponent(category.icon)
-                    const colorClass = getColorBgClass(category.color)
 
                     return (
                       <Card key={category.id} className="border-cream-300 hover:shadow-md transition-shadow h-full w-full max-w-full">
                         <CardContent className="p-2 sm:p-3 md:p-4 flex flex-col gap-2 h-full justify-between">
                           <div className="flex items-center gap-2 sm:gap-3">
-                            <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
-                              <IconComponent className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <IconComponent className="w-5 h-5 text-gray-600" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-primary-800 truncate text-xs sm:text-sm md:text-base">{category.name}</h3>
-                              <div className="flex flex-wrap items-center gap-1 mt-1">
-                                {category.isSystem ? (
-                                  <Badge variant="outline" className="text-[9px] sm:text-xs md:text-sm">Sistema</Badge>
-                                ) : (
-                                  <Badge className="text-[9px] sm:text-xs md:text-sm bg-primary-100 text-primary-700">Personalizada</Badge>
-                                )}
-                                {currentUser?.role === 'root' && (
-                                  <span className={`text-[9px] sm:text-xs md:text-sm ${category.isSystem || category.isPublic ? 'text-green-700' : 'text-gray-400'}`}>{category.isSystem || category.isPublic ? 'Pública' : 'Privada'}</span>
-                                )}
-                              </div>
                             </div>
                           </div>
                           {!category.isSystem && (

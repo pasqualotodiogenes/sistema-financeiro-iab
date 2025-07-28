@@ -5,6 +5,7 @@ import CategoryDashboard from '@/components/category-dashboard'
 import { useCategories } from '@/components/ui/categories-context'
 import { LoadingState } from '@/components/loading-states'
 import Church404 from '@/components/Church404'
+import { getIconComponent } from '@/lib/icons-colors'
 
 export default function CategoryPage() {
   const params = useParams()
@@ -43,11 +44,14 @@ export default function CategoryPage() {
     )
   }
 
+  // Obter componente do ícone
+  const IconComponent = getIconComponent(category.icon)
+
   return (
     <CategoryDashboard
       categorySlug={category.slug}
       categoryName={category.name}
-      icon={category.icon}
+      icon={<IconComponent className="w-5 h-5 text-gray-600" />}
       color={category.color}
       description={category.description}
     />

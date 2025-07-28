@@ -13,13 +13,13 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth-context";
-import { Coffee, Heart, Wrench, Users, Calendar, ShoppingCart, LogOut, Folder, Menu, Home, ChevronDown, ChevronRight, X } from "lucide-react";
+import { LogOut, Folder, Menu, Home, ChevronDown, ChevronRight, X, Users, Wrench } from "lucide-react";
 import { CategoriesProvider, useCategories } from "@/components/ui/categories-context";
+import { UsersProvider } from "@/components/ui/users-context";
 import { ChurchProfileProvider, useChurchProfile } from '@/components/ui/church-profile-context';
+import { getIconComponent } from '@/lib/icons-colors';
 import type { User } from '@/lib/types';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = { Coffee, Heart, Wrench, Users, Calendar, ShoppingCart, Folder };
 
 // Função removida - não era necessária
 
@@ -102,7 +102,7 @@ function SidebarMenuContent({
                   <li className="text-xs text-gray-500 px-2 py-1">Nenhuma categoria encontrada</li>
                 ) : (
                   categories.filter(cat => cat.slug && cat.slug !== 'null' && cat.slug !== 'undefined').map((cat) => {
-                    const Icon = iconMap[cat.icon] || Coffee;
+                    const Icon = getIconComponent(cat.icon);
                     return (
                       <li key={cat.id}>
                         <SidebarMenuButton
@@ -181,6 +181,7 @@ function DashboardContent({ children, user, logout }: { children: React.ReactNod
 
   return (
     <CategoriesProvider>
+      <UsersProvider>
         {/* SidebarProvider NECESSÁRIO para useSidebar() hooks */}
         <SidebarProvider 
           open={sidebarOpen} 
@@ -303,7 +304,8 @@ function DashboardContent({ children, user, logout }: { children: React.ReactNod
           </div>
           </div>
         </SidebarProvider>
-      </CategoriesProvider>
+      </UsersProvider>
+    </CategoriesProvider>
   );
 }
 

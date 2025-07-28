@@ -216,11 +216,7 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
       <PageHeader
         title={categoryName}
         description={description || `Gestão financeira de ${categoryName.toLowerCase()}`}
-        icon={
-          <div style={{ color: 'white' }}>
-            {icon || <FileText className="w-5 h-5" />}
-          </div>
-        }
+        icon={icon || <FileText className="w-5 h-5 text-gray-600" />}
         backHref="/dashboard"
       >
         <div className="flex items-center gap-2">

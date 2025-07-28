@@ -10,7 +10,7 @@ import { LoadingState } from '@/components/loading-states'
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { StatsCards } from '@/components/ui/stats-cards'
-import { getIconComponent, colorMap } from '@/lib/icons-colors'
+import { getIconComponent } from '@/lib/icons-colors'
 
 interface DashboardStats {
   totalEntradas: number
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                       <CardTitle className="text-sm font-medium text-primary-800">
                         {category.name}
                       </CardTitle>
-                      <IconComponent className={`h-5 w-5 ${colorMap[category.color] || 'text-gray-600'}`} />
+                      <IconComponent className="h-5 w-5 text-gray-600" />
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">

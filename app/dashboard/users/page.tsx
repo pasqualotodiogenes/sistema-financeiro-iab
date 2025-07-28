@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import type { Category } from "@/lib/types"
+import { formatDate } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -36,6 +37,7 @@ import { AvatarDisplay } from "@/components/avatar-display" // Import AvatarDisp
 import { AvatarEditor } from "@/components/avatar-editor" // Import AvatarEditor
 import { useAuth } from "@/contexts/auth-context"
 import { User } from "@/lib/types"
+import { useUsers } from "@/components/ui/users-context"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import {
@@ -54,7 +56,7 @@ export default function UsersPage() {
   // Hooks SEMPRE no topo
   const { user: loggedUser, loading } = useAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([])
+  const { users, refreshUsers, invalidateCache } = useUsers()
   const [categories, setCategories] = useState<Category[]>([])
   const [isUserFormDialogOpen, setIsUserFormDialogOpen] = useState(false)
   const [isAvatarEditorOpen, setIsAvatarEditorOpen] = useState(false)
@@ -89,27 +91,13 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (canRender) {
-      loadUsers();
+      refreshUsers();
       loadCategories();
     }
-  }, [canRender]);
+  }, [canRender, refreshUsers]);
 
   if (!canRender) return null;
 
-  const loadUsers = async () => {
-    try {
-      const res = await fetch('/api/users')
-      if (res.ok) {
-        const data = await res.json()
-        setUsers(data)
-      } else {
-        const error = await res.json()
-        setError(error.error || "Erro ao carregar usuários")
-      }
-    } catch {
-      setError("Erro ao carregar usuários")
-    }
-  }
 
   const loadCategories = async () => {
     try {
@@ -179,7 +167,8 @@ export default function UsersPage() {
         }
       }
 
-      await loadUsers()
+      invalidateCache()
+      await refreshUsers()
       resetForm()
       setIsUserFormDialogOpen(false)
       toast({
@@ -220,7 +209,8 @@ export default function UsersPage() {
         const error = await res.json();
         throw new Error(error.error);
       }
-      await loadUsers();
+      invalidateCache();
+      await refreshUsers();
       setUserIdToDelete(null);
       setIsDeleteDialogOpen(false);
       toast({
@@ -240,7 +230,8 @@ export default function UsersPage() {
   }
 
   const handleAvatarChange = () => {
-    loadUsers()
+    invalidateCache()
+    refreshUsers()
     setIsAvatarEditorOpen(false)
     toast({
       title: "Avatar atualizado com sucesso!",
@@ -435,7 +426,7 @@ export default function UsersPage() {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-primary-700 text-xs md:text-sm whitespace-nowrap">{user.lastLogin ? user.lastLogin : "-"}</TableCell>
+                            <TableCell className="text-primary-700 text-xs md:text-sm whitespace-nowrap">{user.lastLogin ? formatDate(user.lastLogin) : "-"}</TableCell>
                             <TableCell className="flex items-center gap-2 justify-center">
                               <button onClick={() => handleEditAvatar(user)} className="p-1 text-primary-600 hover:text-primary-800" title="Editar Avatar">
                                 <Camera className="w-4 h-4" />

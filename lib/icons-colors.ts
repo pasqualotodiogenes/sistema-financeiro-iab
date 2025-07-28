@@ -88,3 +88,40 @@ export function getColorBgClass(colorName?: string): string {
   const colorOption = colorOptions.find((opt) => opt.value === colorName);
   return colorOption?.color || 'bg-blue-500';
 }
+
+// Função utilitária para obter cores vibrantes para ícones
+export function getIconColorClass(colorName?: string): string {
+  if (!colorName) return 'text-blue-500';
+  const colorMap: Record<string, string> = {
+    amber: 'text-amber-500',
+    blue: 'text-blue-500', 
+    green: 'text-green-500',
+    red: 'text-red-500',
+    purple: 'text-purple-500',
+    orange: 'text-orange-500',
+    pink: 'text-pink-500',
+    indigo: 'text-indigo-500',
+    gray: 'text-gray-500',
+    emerald: 'text-emerald-500',
+    lime: 'text-lime-500',
+    cyan: 'text-cyan-500',
+    teal: 'text-teal-500',
+    yellow: 'text-yellow-500'
+  };
+  return colorMap[colorName] || 'text-blue-500';
+}
+
+// Função para cores automáticas baseadas no ícone
+export function getAutoColor(iconName?: string): string {
+  const iconColorMap: Record<string, string> = {
+    Coffee: 'amber',       // ☕ Café = Âmbar
+    Heart: 'red',          // ❤️ Coração = Vermelho
+    Wrench: 'blue',        // 🔧 Chave = Azul
+    Users: 'green',        // 👥 Usuários = Verde
+    Calendar: 'purple',    // 📅 Calendário = Roxo
+    ShoppingCart: 'orange', // 🛒 Carrinho = Laranja
+    Folder: 'gray',        // 📁 Pasta = Cinza
+    FileText: 'indigo'     // 📄 Arquivo = Índigo
+  };
+  return iconColorMap[iconName || ''] || 'blue';
+}
