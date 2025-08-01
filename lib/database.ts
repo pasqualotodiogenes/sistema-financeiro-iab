@@ -86,6 +86,24 @@ function initializeDatabase() {
     );
   `);
 
+  // Corrigir slugs das categorias do sistema (executa apenas uma vez)
+  const updateSlugs = db.prepare('UPDATE categories SET slug = ? WHERE id = ? AND slug IS NULL');
+  const systemCategories = [
+    { id: 'aquisicao', slug: 'aquisicao' },
+    { id: 'cantinas', slug: 'cantinas' },  
+    { id: 'eventos', slug: 'eventos' },
+    { id: 'jovens', slug: 'jovens' },
+    { id: 'melhorias', slug: 'melhorias' },
+    { id: 'missoes', slug: 'missoes' }
+  ];
+  
+  systemCategories.forEach(({ id, slug }) => {
+    const result = updateSlugs.run(slug, id);
+    if (result.changes > 0) {
+      console.log(`🔧 Fixed slug for ${id} → ${slug}`);
+    }
+  });
+
   console.log('✅ SQLite database initialized successfully!');
   isInitialized = true;
 }
