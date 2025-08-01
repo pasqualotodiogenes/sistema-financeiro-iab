@@ -40,7 +40,7 @@ import { useUserForm } from "@/hooks/use-user-form"
 import { useDeleteDialog } from "@/hooks/use-delete-dialog"
 import { useUserRoles } from "@/hooks/use-user-roles"
 import UserTableRow from "@/components/user-table-row"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast, toast } from "@/components/ui/use-toast"
 import { useRouter } from "next/navigation"
 import {
   AlertDialog,
@@ -75,7 +75,7 @@ export default function UsersPage() {
   });
   
   const { getRoleIcon, getRoleBadgeColor, canDeleteUser } = useUserRoles();
-  const { toast } = useToast();
+  const toastHook = useToast();
   
   // Estados locais reduzidos
   const [categories, setCategories] = useState<Category[]>([]);
