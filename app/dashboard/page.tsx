@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AuthGuard } from '@/components/auth-guard'
 import { useAuth } from '@/contexts/auth-context'
@@ -11,6 +11,7 @@ import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { StatsCards } from '@/components/ui/stats-cards'
 import { getIconComponent } from '@/lib/icons-colors'
+import CategoryCard from '@/components/category-card'
 
 interface DashboardStats {
   totalEntradas: number
@@ -61,10 +62,18 @@ export default function DashboardPage() {
     }
   }
 
+  // ✅ HOOKS SEMPRE ANTES DOS EARLY RETURNS
+  // Memoized calculations
+  const saldo = useMemo(() => {
+    return (stats?.totalEntradas || 0) - (stats?.totalSaidas || 0);
+  }, [stats?.totalEntradas, stats?.totalSaidas]);
 
+  // Memoized filtered categories
+  const filteredCategories = useMemo(() => {
+    return stats?.categories?.filter(category => canAccessCategory(category.id, stats.categories)) ?? [];
+  }, [stats?.categories, canAccessCategory]);
 
-
-
+  // Early returns APÓS todos os hooks
   if (loading) {
     return (
       <LoadingState loading={true} error={null}>
@@ -80,8 +89,6 @@ export default function DashboardPage() {
       </LoadingState>
     )
   }
-
-  const saldo = (stats?.totalEntradas || 0) - (stats?.totalSaidas || 0)
 
   return (
     <AuthGuard>
@@ -108,48 +115,9 @@ export default function DashboardPage() {
 
           {/* Categorias */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {stats?.categories
-              .filter(category => canAccessCategory(category.id, stats.categories))
-              .map((category) => {
-                  const IconComponent = getIconComponent(category.icon)
-                const categorySaldo = category.totalEntradas - category.totalSaidas
-
-                  return (
-                    <Link 
-                      key={category.id}
-                      href={`/dashboard/${category.slug}`}
-                      className="block focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg"
-                    >
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer border-cream-300 h-full">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium text-primary-800">
-                        {category.name}
-                      </CardTitle>
-                      <IconComponent className="h-5 w-5 text-gray-600" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-green-600">Entradas:</span>
-                          <span className="font-medium">{formatCurrency(category.totalEntradas)}</span>
-                              </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-red-600">Saídas:</span>
-                          <span className="font-medium">{formatCurrency(category.totalSaidas)}</span>
-                              </div>
-                        <div className="flex justify-between text-sm border-t pt-2">
-                        <span className={`font-bold ${categorySaldo >= 0 ? 'text-green-800' : 'text-red-800'}`}>Saldo:</span>
-                        <span className={`font-bold ${categorySaldo >= 0 ? 'text-green-800' : 'text-red-800'}`}>{formatCurrency(categorySaldo)}</span>
-                            </div>
-                        <div className="text-xs text-gray-500 text-center">
-                        {category.movementsCount} movimentaç{category.movementsCount !== 1 ? 'ões' : 'ão'}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  )
-                })}
+            {filteredCategories.map((category) => (
+              <CategoryCard key={category.id} category={category} />
+            ))}
         </div>
       </div>
     </AuthGuard>

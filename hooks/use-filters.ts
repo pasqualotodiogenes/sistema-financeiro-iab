@@ -26,6 +26,7 @@ export function useFilters<T extends Record<string, any>>({
   const debouncedFilters = useDebounce(activeFilters, debounceMs)
 
   const filteredData = useMemo(() => {
+    if (!data || !Array.isArray(data)) return [];
     return data.filter(item => {
       return Object.entries(debouncedFilters).every(([key, value]) => {
         if (!value || value === '') return true

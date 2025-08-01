@@ -1,5 +1,8 @@
+"use client"
+
 import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 import type { Category } from "@/lib/types";
+import { CACHE_CONFIG } from "@/lib/constants";
 
 interface CategoriesContextType {
   categories: Category[];
@@ -13,7 +16,7 @@ const CategoriesContext = createContext<CategoriesContextType | undefined>(undef
 
 // Cache e deduplicação para evitar múltiplas chamadas
 let categoriesCache: { data: Category[]; timestamp: number } | null = null;
-const CACHE_TTL = 60000; // 1 minuto
+const CACHE_TTL = CACHE_CONFIG.TTL.CATEGORIES;
 let pendingRequest: Promise<Category[]> | null = null;
 
 export const CategoriesProvider = ({ children }: { children: React.ReactNode }) => {

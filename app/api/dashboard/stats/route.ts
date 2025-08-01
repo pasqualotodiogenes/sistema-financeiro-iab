@@ -45,35 +45,59 @@ export async function GET(req: NextRequest) {
       .filter((m: Movement) => m.type === 'saida')
       .reduce((sum: number, m: Movement) => sum + m.amount, 0)
 
-    // Calcular estatísticas por categoria
-    const categoriesWithStats = categories.map((category: Category) => {
-      const categoryMovements = movements.filter((m: Movement) => m.category === category.id)
-      const categoryEntradas = categoryMovements
-        .filter((m: Movement) => m.type === 'entrada')
-        .reduce((sum: number, m: Movement) => sum + m.amount, 0)
-      const categorySaidas = categoryMovements
-        .filter((m: Movement) => m.type === 'saida')
-        .reduce((sum: number, m: Movement) => sum + m.amount, 0)
+    // Otimizado: Calcular estatísticas por categoria usando SQL agregado (evita problema N+1)
+    let statsQuery = `
+      SELECT 
+        c.id,
+        c.name,
+        c.icon,
+        c.color,
+        c.slug,
+        c.isSystem,
+        c.isPublic,
+        COALESCE(SUM(CASE WHEN m.type = 'entrada' THEN m.amount ELSE 0 END), 0) as totalEntradas,
+        COALESCE(SUM(CASE WHEN m.type = 'saida' THEN m.amount ELSE 0 END), 0) as totalSaidas,
+        COALESCE(COUNT(m.id), 0) as movementsCount
+      FROM categories c
+      LEFT JOIN movements m ON c.id = m.category
+    `
 
-      return {
-        id: category.id,
-        name: category.name,
-        icon: category.icon,
-        color: category.color,
-        slug: category.slug,
-        isSystem: !!category.isSystem,
-        isPublic: !!category.isPublic,
-        totalEntradas: categoryEntradas,
-        totalSaidas: categorySaidas,
-        movementsCount: categoryMovements.length
-      }
-    })
+    // Aplicar filtros baseados no role do usuário
+    if (user.role === 'viewer') {
+      statsQuery += ' WHERE c.isSystem = 1 OR c.isPublic = 1'
+    } else if (user.role !== 'root' && user.role !== 'admin') {
+      const categoryPlaceholders = user.permissions.categories.map(() => '?').join(',')
+      statsQuery += ` WHERE c.id IN (${categoryPlaceholders})`
+    }
+
+    statsQuery += ' GROUP BY c.id, c.name, c.icon, c.color, c.slug, c.isSystem, c.isPublic ORDER BY c.name'
+
+    let categoriesWithStats
+    if (user.role === 'viewer' || user.role === 'root' || user.role === 'admin') {
+      categoriesWithStats = db().prepare(statsQuery).all()
+    } else {
+      categoriesWithStats = db().prepare(statsQuery).all(...user.permissions.categories)
+    }
+
+    // Converter para o formato esperado
+    const processedCategories = categoriesWithStats.map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      icon: row.icon,
+      color: row.color,
+      slug: row.slug,
+      isSystem: !!row.isSystem,
+      isPublic: !!row.isPublic,
+      totalEntradas: row.totalEntradas,
+      totalSaidas: row.totalSaidas,
+      movementsCount: row.movementsCount
+    }))
 
     return NextResponse.json({
       totalEntradas,
       totalSaidas,
       totalMovements: movements.length,
-      categories: categoriesWithStats
+      categories: processedCategories
     })
   } catch (error) {
     console.error('Erro ao buscar estatísticas:', error)

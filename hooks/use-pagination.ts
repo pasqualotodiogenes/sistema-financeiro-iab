@@ -16,12 +16,13 @@ export function usePagination({
   const [currentPage, setCurrentPage] = useState(initialPage)
 
   const paginatedData = useMemo(() => {
+    if (!data || !Array.isArray(data)) return [];
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
     return data.slice(startIndex, endIndex)
   }, [data, currentPage, itemsPerPage])
 
-  const totalPages = Math.ceil(data.length / itemsPerPage)
+  const totalPages = Math.ceil((data?.length || 0) / itemsPerPage)
   const hasNextPage = currentPage < totalPages
   const hasPrevPage = currentPage > 1
 

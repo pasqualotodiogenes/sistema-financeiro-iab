@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+"use client"
+
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -8,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Plus, FileText, Printer, TrendingUp, TrendingDown, DollarSign, Edit, Trash2 } from "lucide-react"
+import MovementTableRow from "@/components/movement-table-row"
+import MovementCard from "@/components/movement-card"
 import Link from "next/link"
 import { filterMovementsByDate, formatCurrency } from "@/lib/utils"
 import { StatsCards } from "@/components/ui/stats-cards"
@@ -44,6 +48,7 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
   const [editingMovement, setEditingMovement] = useState<Movement | null>(null)
   const [selectedYear] = useState<number>()
   const [selectedMonth] = useState<number>()
+  const [movementIdToDelete, setMovementIdToDelete] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     date: "",
     description: "",
@@ -52,7 +57,12 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
   })
   // Removido isExportDialogOpen - não utilizado
   const { categories } = useCategories();
-  const category = categories.find(cat => cat.slug === categorySlug);
+  
+  // Memoized category lookup
+  const category = useMemo(() => {
+    return categories.find(cat => cat.slug === categorySlug);
+  }, [categories, categorySlug]);
+  
   const categoryId = category?.id;
   const { toast } = useToast();
   // Removido toast de debug
@@ -107,9 +117,20 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
     }
   }
 
-  const totalEntradas = filteredMovements.filter((m) => m.type === "entrada").reduce((sum, m) => sum + m.amount, 0)
-  const totalSaidas = filteredMovements.filter((m) => m.type === "saida").reduce((sum, m) => sum + m.amount, 0)
-  const saldo = totalEntradas - totalSaidas
+  // Memoized expensive calculations - critical for performance with large datasets
+  const totalEntradas = useMemo(() => {
+    if (!filteredMovements || !Array.isArray(filteredMovements)) return 0;
+    return filteredMovements.filter((m) => m.type === "entrada").reduce((sum, m) => sum + m.amount, 0);
+  }, [filteredMovements]);
+
+  const totalSaidas = useMemo(() => {
+    if (!filteredMovements || !Array.isArray(filteredMovements)) return 0;
+    return filteredMovements.filter((m) => m.type === "saida").reduce((sum, m) => sum + m.amount, 0);
+  }, [filteredMovements]);
+
+  const saldo = useMemo(() => {
+    return totalEntradas - totalSaidas;
+  }, [totalEntradas, totalSaidas]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +200,26 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
       toast({ title: "Erro ao excluir movimentação", description: error instanceof Error ? error.message : 'Erro desconhecido', variant: "destructive" });
     }
   }
+
+  // Stable callback functions for React.memo optimization
+  const handleMovementEdit = useCallback((movement: Movement) => {
+    handleEdit(movement);
+  }, []);
+
+  const handleMovementDeleteClick = useCallback((movementId: string) => {
+    setMovementIdToDelete(movementId);
+  }, []);
+
+  const handleMovementDeleteConfirm = useCallback(async () => {
+    if (movementIdToDelete) {
+      await handleDelete(movementIdToDelete);
+      setMovementIdToDelete(null);
+    }
+  }, [movementIdToDelete]);
+
+  const handleMovementDeleteCancel = useCallback(() => {
+    setMovementIdToDelete(null);
+  }, []);
 
   // Função generateReport removida - não utilizada
 
@@ -324,50 +365,17 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
                   </div>
                 ) : (
                   filteredMovements.map((movement) => (
-                    <div key={movement.id} className="bg-white border border-cream-200 rounded-lg p-4 shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <p className="font-medium text-primary-800">{movement.description}</p>
-                          <p className="text-sm text-primary-600">{new Date(movement.date).toLocaleDateString("pt-BR")}</p>
-                        </div>
-                        <div className="text-right">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${movement.type === "entrada" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                            {movement.type.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className={`text-lg font-bold ${movement.type === "entrada" ? "text-green-600" : "text-red-600"}`}>
-                          {formatCurrency(movement.amount)}
-                        </span>
-                        {(currentUser?.permissions?.canEdit || currentUser?.permissions?.canDelete) && (
-                          <div className="flex gap-1">
-                            {currentUser?.permissions?.canEdit && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(movement)}
-                                aria-label={`Editar movimentação de ${movement.description}`}
-                                className="h-10 w-10 p-0 text-cream-700 hover:text-cream-800 hover:bg-cream-100 rounded-lg"
-                              >
-                                <Edit className="h-5 w-5" />
-                              </Button>
-                            )}
-                            {currentUser?.permissions?.canDelete && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(movement.id)}
-                                aria-label={`Excluir movimentação de ${movement.description}`}
-                                className="h-10 w-10 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg"
-                              >
-                                <Trash2 className="h-5 w-5" />
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <MovementCard
+                      key={movement.id}
+                      movement={movement}
+                      canEdit={currentUser?.permissions?.canEdit || false}
+                      canDelete={currentUser?.permissions?.canDelete || false}
+                      isDeleteDialogOpen={movementIdToDelete === movement.id}
+                      onEdit={handleMovementEdit}
+                      onDeleteClick={handleMovementDeleteClick}
+                      onDeleteConfirm={handleMovementDeleteConfirm}
+                      onDeleteCancel={handleMovementDeleteCancel}
+                    />
                   ))
                 )}
               </div>
@@ -398,60 +406,17 @@ export default function CategoryDashboard({ categorySlug, categoryName, icon, co
                       </TableRow>
                     ) : (
                       filteredMovements.map((movement) => (
-                        <TableRow key={movement.id}>
-                          <TableCell className="text-primary-700">{new Date(movement.date).toLocaleDateString("pt-BR")}</TableCell>
-                          <TableCell className="text-primary-700">{movement.description}</TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${movement.type === "entrada" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{movement.type.toUpperCase()}</span>
-                          </TableCell>
-                          <TableCell className={`text-right font-medium ${movement.type === "entrada" ? "text-green-600" : "text-red-600"}`}>{formatCurrency(movement.amount)}</TableCell>
-                          {(currentUser?.permissions?.canEdit || currentUser?.permissions?.canDelete) && (
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                {currentUser?.permissions?.canEdit && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    onClick={() => handleEdit(movement)} 
-                                    aria-label={`Editar movimentação de ${movement.description}`}
-                                    className="h-9 w-9 rounded-lg hover:bg-cream-100 text-cream-700 focus:outline-none focus:ring-2 focus:ring-cream-400"
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                )}
-                                {currentUser?.permissions?.canDelete && (
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        aria-label={`Excluir movimentação de ${movement.description}`}
-                                        className="h-9 w-9 rounded-lg hover:bg-red-100 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Excluir Movimentação</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Tem certeza que deseja excluir esta movimentação? <br />
-                                          <span className="font-semibold text-red-600">Esta ação não poderá ser desfeita.</span>
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel className="text-primary-600 hover:bg-cream-50">Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white font-medium" onClick={() => handleDelete(movement.id)}>
-                                          Excluir
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                )}
-                              </div>
-                            </TableCell>
-                          )}
-                        </TableRow>
+                        <MovementTableRow
+                          key={movement.id}
+                          movement={movement}
+                          canEdit={currentUser?.permissions?.canEdit || false}
+                          canDelete={currentUser?.permissions?.canDelete || false}
+                          isDeleteDialogOpen={movementIdToDelete === movement.id}
+                          onEdit={handleMovementEdit}
+                          onDeleteClick={handleMovementDeleteClick}
+                          onDeleteConfirm={handleMovementDeleteConfirm}
+                          onDeleteCancel={handleMovementDeleteCancel}
+                        />
                       ))
                     )}
                   </TableBody>

@@ -1,5 +1,8 @@
+"use client"
+
 import React, { createContext, useContext, useState, useCallback, useRef } from "react";
 import type { User } from "@/lib/types";
+import { useAuth } from "@/contexts/auth-context";
 
 interface UsersContextType {
   users: User[];
@@ -11,17 +14,25 @@ interface UsersContextType {
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
+import { CACHE_CONFIG } from '@/lib/constants';
+
 // Cache e deduplicação para evitar múltiplas chamadas
 let usersCache: { data: User[]; timestamp: number } | null = null;
-const CACHE_TTL = 60000; // 1 minuto
+const CACHE_TTL = CACHE_CONFIG.TTL.USERS;
 let pendingRequest: Promise<User[]> | null = null;
 
 export const UsersProvider = ({ children }: { children: React.ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const mounted = useRef(false);
+  const { user: loggedUser, loading: authLoading } = useAuth();
 
   const refreshUsers = useCallback(async () => {
+    // Só carregar se o usuário for root
+    if (!loggedUser || loggedUser.role !== 'root') {
+      return;
+    }
+
     // Se já tem uma requisição pendente, aguarda ela
     if (pendingRequest) {
       const result = await pendingRequest;
@@ -64,7 +75,7 @@ export const UsersProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       pendingRequest = null;
     }
-  }, []);
+  }, [loggedUser]);
 
   // Função para invalidar cache e forçar atualização
   const invalidateCache = useCallback(() => {
@@ -74,11 +85,11 @@ export const UsersProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Carregar usuários ao montar (apenas uma vez)
   React.useEffect(() => {
-    if (!mounted.current) {
+    if (!mounted.current && !authLoading && loggedUser?.role === 'root') {
       mounted.current = true;
       refreshUsers();
     }
-  }, [refreshUsers]);
+  }, [refreshUsers, authLoading, loggedUser?.role]);
 
   return (
     <UsersContext.Provider value={{ users, loading, refreshUsers, invalidateCache, setUsers }}>

@@ -53,8 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pendingRequests.clear()
     }
     
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
   }, [])
 
   const checkSession = async () => {
