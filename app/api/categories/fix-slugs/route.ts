@@ -13,7 +13,7 @@ export async function GET() {
       { id: 'missoes', slug: 'missoes' }
     ];
     
-    const results = [];
+    const results: Array<{id: string, slug: string, changes: number}> = [];
     systemCategories.forEach(({ id, slug }) => {
       const result = updateSlugs.run(slug, id);
       results.push({ id, slug, changes: result.changes });

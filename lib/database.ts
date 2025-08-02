@@ -84,6 +84,13 @@ function initializeDatabase() {
       image TEXT,
       updatedAt TEXT DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS backup_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      backup_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+      email_sent BOOLEAN DEFAULT 0,
+      changes_count INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'pending'
+    );
   `);
 
   // Corrigir slugs das categorias do sistema (executa apenas uma vez)
@@ -105,6 +112,17 @@ function initializeDatabase() {
   });
 
   console.log('✅ SQLite database initialized successfully!');
+  
+  // Inicializar backup scheduler em produção
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const { startBackupScheduler } = require('./backup-scheduler');
+      startBackupScheduler();
+    } catch (error) {
+      console.error('⚠️  Erro ao inicializar backup scheduler:', error);
+    }
+  }
+  
   isInitialized = true;
 }
 
