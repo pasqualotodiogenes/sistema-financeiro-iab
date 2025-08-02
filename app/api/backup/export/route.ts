@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
         sqlExport += `${schema.sql};\n\n`;
         
         // Dados da tabela
-        const rows = database.prepare(`SELECT * FROM ${tableName}`).all();
+        const rows = database.prepare(`SELECT * FROM ${tableName}`).all() as Record<string, any>[];
         
         if (rows.length > 0) {
           const columns = Object.keys(rows[0]);
