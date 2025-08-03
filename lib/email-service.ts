@@ -3,8 +3,13 @@ import { db } from './database';
 import path from 'path';
 import fs from 'fs';
 
-// Configuração do Resend (variável de ambiente)
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Função para obter Resend apenas se configurado
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 interface BackupEmailData {
   recipientEmail: string;
@@ -17,6 +22,13 @@ interface BackupEmailData {
 
 export async function sendBackupEmail(data: BackupEmailData): Promise<boolean> {
   try {
+    const resend = getResend();
+    
+    if (!resend) {
+      console.log('📧 RESEND_API_KEY não configurada - email de backup pulado');
+      return false;
+    }
+    
     const emailHtml = generateEmailTemplate(data);
     
     const result = await resend.emails.send({
